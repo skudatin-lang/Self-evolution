@@ -381,7 +381,6 @@ window._openNewEntryPicker = openNewEntryPicker;
 // ════════════════════════════════════════
 export async function renderDashboard() {
   const el = document.getElementById("dash-body");
-  const sb = document.getElementById("sb-body");
 
   // Загружаем все данные параллельно
   const [stats, momentum, stateToday] = await Promise.all([
@@ -414,32 +413,6 @@ export async function renderDashboard() {
   const keyGoal = keyTask?.goalId
     ? stats.goals.find(g => g.id === keyTask.goalId)?.title || ""
     : "";
-
-  // ── SIDEBAR ──
-  sb.innerHTML = `
-    <div class="dsb-profile">
-      <div class="dsb-greeting">${gr},</div>
-      <div class="dsb-name">${esc(fname || "—")}</div>
-      <div class="dsb-date">${WD[d.getDay()]}, ${d.getDate()} ${MGEN[d.getMonth()]}</div>
-      ${momentum.streak > 1
-        ? `<div class="dsb-flames">🔥 ${momentum.streak} ${pluralDays(momentum.streak)} подряд</div>`
-        : `<div class="dsb-flames" style="color:var(--tx-l);font-size:13px;">Начни серию выполнений</div>`
-      }
-    </div>
-
-    <!-- Momentum в сайдбаре — компактный -->
-    <div class="dsb-eff-wrap" onclick="window.switchTab('plan')" title="Открыть план дня">
-      <div class="dsb-eff-lbl">Life Momentum</div>
-      ${momentumCircle(momentum.score, momentum.trend)}
-      <div class="dsb-eff-sub">${momentum.done7} из ${momentum.total7} задач за 7 дней</div>
-      ${momentum.overdue > 0
-        ? `<div class="dsb-eff-hint" style="color:var(--red)">⚠ ${momentum.overdue} просрочено</div>`
-        : `<div class="dsb-eff-hint" style="color:var(--grn)">✓ всё в срок</div>`
-      }
-    </div>
-
-    <button class="dsb-new-btn" onclick="window._openNewEntryPicker()">✦ Новая запись</button>
-  `;
 
   // ── MAIN CONTENT ──
   el.innerHTML = `

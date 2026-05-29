@@ -25,7 +25,6 @@ export async function renderAiChat() {
   const body = document.getElementById("ai-chat-body");
   if (!body) return;
 
-  if (sb) sb.innerHTML = "";
 
   const lastAnalysis = localStorage.getItem("lc-ai-chat-last-summary") || "";
   const lastTime     = localStorage.getItem("lc-ai-chat-last-time")    || "";
