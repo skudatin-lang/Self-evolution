@@ -32,6 +32,11 @@ export function registerTab(id, renderFn) {
 export async function switchTab(id) {
   curTab  = id;
   weekOff = 0;
+
+  // Сразу очищаем сайдбар — не должно быть «остаточного» контента от прошлой вкладки
+  const sbBody = $("sb-body");
+  if (sbBody) sbBody.innerHTML = "";
+
   document.querySelectorAll(".nt").forEach(t => t.classList.toggle("on", t.dataset.tab === id));
   document.querySelectorAll(".mod").forEach(m => m.classList.remove("on"));
   $("tab-" + id)?.classList.add("on");
@@ -93,7 +98,14 @@ export function buildDayNav(selDate, datesWT, showAll, containerId, onDay, onAll
   $(`${containerId}-nw`).onclick  = () => { weekOff++; if(renderers[curTab]) renderers[curTab](); };
   $(`${containerId}-all`).onclick = onAll;
   $(containerId).querySelectorAll(".ds-day").forEach(b =>
-    b.addEventListener("click", () => { weekOff = 0; onDay(new Date(b.dataset.date)); })
+    b.addEventListener("click", () => {
+      weekOff = 0;
+      // Парсим в локальном времени, не UTC — new Date("2026-05-27") даёт UTC полночь
+      const [y, m, d] = b.dataset.date.split("-").map(Number);
+      const localDate = new Date(y, m - 1, d);
+      localDate.setHours(0,0,0,0);
+      onDay(localDate);
+    })
   );
 }
 
