@@ -31,7 +31,7 @@
       <img src="icons/icon-192.png" alt="Life Evolution" class="a-logo-img"/>
     </div>
     <div class="a-title">Life Evolution</div>
-    <div class="a-sub">Система наблюдения за собственной жизнью</div>
+    <div class="a-sub">Система эволюции личности и наблюдения за жизнью</div>
     <button class="a-btn a-g" id="btn-g">
       <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
       Войти через Google
@@ -49,7 +49,7 @@
      ════════════════════════════════════ -->
 <div id="s-app" class="scr">
 
-  <!-- Mobile top bar (hidden on desktop) -->
+  <!-- Mobile top bar: visible only when sidebar is collapsed on mobile -->
   <header class="topbar">
     <button class="tb-burg" id="burger"><span></span><span></span><span></span></button>
     <span class="tb-ttl" id="tb-ttl">Главная</span>
@@ -57,137 +57,258 @@
   </header>
   <div class="sb-ov" id="sb-ov"></div>
 
-  <!-- ════ SIDEBAR ════ -->
+  <!-- ════════════════════════════════════
+       SIDEBAR (desktop left / mobile top)
+       ════════════════════════════════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sb-prof">
-      <!-- Month label -->
+
+      <!-- Month -->
       <div class="sb-mo" id="sb-mo"></div>
-      <!-- Avatar -->
+
+      <!-- User photo + name + email -->
       <div class="sb-av" id="sb-av">?</div>
       <span class="sb-un" id="sb-un">—</span>
       <span class="sb-ue" id="sb-ue"></span>
 
-      <!-- Primary action -->
+      <!-- Primary CTA — opens entry picker (task/idea/diary) -->
       <button class="sb-new" id="sb-new">✦ Новая запись</button>
 
-      <!-- Secondary actions -->
+      <!-- Secondary actions: Logout / Calendar / Theme -->
       <div class="sb-btns">
         <button class="sb-btn" id="btn-logout">Выйти</button>
         <button class="sb-btn" onclick="openCal()">Календарь</button>
         <button class="sb-btn" id="theme-toggle" onclick="toggleTheme()">🌙</button>
-        <button class="sb-btn" onclick="window._openAvatarDialog()" title="Мой аватар">🧑 Аватар</button>
       </div>
 
-      <!-- Wheel of Balance -->
+      <!-- Life tools -->
       <button class="sb-wb" onclick="window.reopenSurvey?.()">🎯 Колесо баланса</button>
-      <!-- AI Profile -->
       <button class="sb-wb" onclick="window._openProfileDialog()" style="margin-top:4px">🧬 Мой профиль для AI</button>
     </div>
 
-    <!-- Sidebar dynamic content (filled by JS modules) -->
+    <!-- Dynamic sidebar content filled by each tab's JS -->
     <div class="sb-body" id="sb-body"></div>
   </aside>
 
-  <!-- ════ MAIN AREA ════ -->
+  <!-- ════════════════════════════════════
+       MAIN AREA
+       ════════════════════════════════════ -->
   <div class="main-area">
 
-    <!-- ── Tab navigation ── -->
-    <nav class="top-nav">
-      <!-- Tab: Home (was Dashboard) -->
-      <button class="nt on" data-tab="dashboard">Главная</button>
-      <!-- Tab: Day (was Plan) -->
-      <button class="nt" data-tab="plan">День</button>
-      <!-- Tab: Life (was Goals / Mind Map) -->
-      <button class="nt" data-tab="goals">Жизнь</button>
-      <!-- Tab: Ideas -->
-      <button class="nt" data-tab="ideas">Идеи</button>
-      <!-- Tab: Journal (was Diary) -->
-      <button class="nt" data-tab="diary">Журнал</button>
-      <!-- Theme toggle — visible on mobile nav -->
+    <!-- ── DESKTOP tab bar (top) ── -->
+    <nav class="top-nav" id="top-nav">
+      <button class="nt on"  data-tab="dashboard">Главная</button>
+      <button class="nt"     data-tab="plan">День</button>
+      <button class="nt"     data-tab="goals">Жизнь</button>
+      <button class="nt"     data-tab="diary">Журнал</button>
+      <button class="nt"     data-tab="profile">Профиль</button>
+      <button class="nt"     data-tab="analytics">Аналитика</button>
+      <button class="nt"     data-tab="ideas">Идеи</button>
+      <button class="nt"     data-tab="ai-chat">AI</button>
+      <!-- Theme toggle — visible only on mobile nav bar -->
       <button class="nav-theme-btn" id="nav-theme-btn" title="Тёмная тема">🌙</button>
     </nav>
 
+    <!-- ── Tab content ── -->
     <div class="mwrap">
 
-      <!-- ════════════════════════════════
-           TAB: ГЛАВНАЯ (Home / Life OS)
-           ════════════════════════════════ -->
+      <!-- ══════════════════
+           ГЛАВНАЯ
+           ══════════════════ -->
       <div id="tab-dashboard" class="mod on">
-        <div class="mod-hd">
-          <span class="mod-ttl">Главная</span>
-        </div>
-        <div class="mod-body" id="dash-body">
-          <!-- Filled by dashboard.js -->
-        </div>
+        <div class="mod-hd"><span class="mod-ttl">Главная</span></div>
+        <div class="mod-body" id="dash-body"></div>
       </div>
 
-      <!-- ════════════════════════════════
-           TAB: ДЕНЬ (Day Screen)
-           ════════════════════════════════ -->
+      <!-- ══════════════════
+           ДЕНЬ
+           ══════════════════ -->
       <div id="tab-plan" class="mod">
         <div class="mod-hd">
           <span class="mod-ttl">День</span>
           <button class="dn-cal-btn" onclick="openCal()">📅</button>
         </div>
-        <div class="mod-body" id="plan-body">
-          <!-- Filled by plan.js -->
-        </div>
+        <div class="mod-body" id="plan-body"></div>
       </div>
 
-      <!-- ════════════════════════════════
-           TAB: ЖИЗНЬ (Life Architecture / Mind Map)
-           ════════════════════════════════ -->
+      <!-- ══════════════════
+           ЖИЗНЬ (Mind Map)
+           ══════════════════ -->
       <div id="tab-goals" class="mod" style="overflow:hidden;">
         <div class="mod-hd">
-          <span class="mod-ttl" id="mm-ttl">Архитектура жизни</span>
-          <div style="display:flex;gap:6px;">
+          <span class="mod-ttl" id="mm-ttl">Жизнь</span>
+          <!-- Переключатель Карта / Список -->
+          <div class="goals-view-switcher">
+            <button class="gvs-btn on" id="gvs-map"  onclick="window._goalsView('map')">Карта</button>
+            <button class="gvs-btn"    id="gvs-list" onclick="window._goalsView('list')">Список</button>
+          </div>
+          <div style="display:flex;gap:4px;">
             <button class="dn-cal-btn" id="mm-zoom-in"  title="Приблизить">＋</button>
             <button class="dn-cal-btn" id="mm-zoom-out" title="Отдалить">－</button>
             <button class="dn-cal-btn" id="mm-reset"    title="Сброс вида">⌖</button>
           </div>
         </div>
-        <div class="mm-wrap" id="mm-wrap">
-          <svg class="mm-svg" id="mm-svg" style="width:100%;height:100%;position:absolute;inset:0;"></svg>
-          <div class="mm-tb">
-            <button class="mm-tb-btn" onclick="openNewModal('task',null,null,'goals')">+ Задача</button>
-            <button class="mm-tb-btn" onclick="openNewModal('goal',null,null,'goals')">+ Цель</button>
+
+        <!-- Map view -->
+        <div id="goals-map-view" class="goals-map-view">
+          <div class="mm-wrap" id="mm-wrap">
+            <svg class="mm-svg" id="mm-svg" style="width:100%;height:100%;position:absolute;inset:0;"></svg>
+            <div class="mm-tb">
+              <button class="mm-tb-btn" onclick="openNewModal('task',null,null,'goals')">+ Задача</button>
+              <button class="mm-tb-btn" onclick="openNewModal('goal',null,null,'goals')">+ Цель</button>
+            </div>
+            <div class="mm-hint" id="mm-hint">Клик — выбрать · Двойной клик — добавить · Перетаскивание — перемещать · Прокрутка — масштаб</div>
           </div>
-          <div class="mm-hint" id="mm-hint">Клик — выбрать · Двойной клик — добавить · Перетаскивание — перемещать · Прокрутка — масштаб</div>
+
+          <!-- Ближайшие шаги — под картой -->
+          <div class="goals-steps-panel" id="goals-steps-panel"></div>
         </div>
+
+        <!-- List view -->
+        <div id="goals-list-view" class="mod-body" style="display:none;" id="goals-list-body"></div>
       </div>
 
-      <!-- ════════════════════════════════
-           TAB: ИДЕИ
-           ════════════════════════════════ -->
-      <div id="tab-ideas" class="mod">
-        <div class="mod-hd">
-          <span class="mod-ttl">Идеи</span>
-          <button class="dn-cal-btn" onclick="openCal()">📅</button>
-        </div>
-        <div class="mod-body" id="ideas-body">
-          <!-- Filled by ideas.js -->
-        </div>
-      </div>
-
-      <!-- ════════════════════════════════
-           TAB: ЖУРНАЛ (Journal / Diary)
-           ════════════════════════════════ -->
+      <!-- ══════════════════
+           ЖУРНАЛ
+           ══════════════════ -->
       <div id="tab-diary" class="mod">
         <div class="mod-hd">
           <span class="mod-ttl">Журнал</span>
           <button class="dn-cal-btn" onclick="openCal()">📅</button>
         </div>
-        <div class="mod-body" id="diary-body">
-          <!-- Filled by diary.js -->
-        </div>
+        <div class="mod-body" id="diary-body"></div>
+      </div>
+
+      <!-- ══════════════════
+           ПРОФИЛЬ (новая вкладка)
+           ══════════════════ -->
+      <div id="tab-profile" class="mod">
+        <div class="mod-hd"><span class="mod-ttl">Профиль</span></div>
+        <div class="mod-body" id="profile-body"></div>
+      </div>
+
+      <!-- ══════════════════
+           АНАЛИТИКА (новая вкладка)
+           ══════════════════ -->
+      <div id="tab-analytics" class="mod">
+        <div class="mod-hd"><span class="mod-ttl">Аналитика</span></div>
+        <div class="mod-body" id="analytics-body"></div>
+      </div>
+
+      <!-- ══════════════════
+           ИДЕИ
+           ══════════════════ -->
+      <div id="tab-ideas" class="mod">
+        <div class="mod-hd"><span class="mod-ttl">Идеи</span></div>
+        <div class="mod-body" id="ideas-body"></div>
+      </div>
+
+      <!-- ══════════════════
+           AI-АССИСТЕНТ (новая вкладка)
+           ══════════════════ -->
+      <div id="tab-ai-chat" class="mod">
+        <div class="mod-hd"><span class="mod-ttl">AI-ассистент</span></div>
+        <div class="mod-body mod-body--ai" id="ai-chat-body"></div>
       </div>
 
     </div><!-- /mwrap -->
+
+    <!-- ════════════════════════════════════
+         MOBILE BOTTOM NAV BAR (5 tabs + Ещё)
+         ════════════════════════════════════ -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="bn-btn on" data-tab="dashboard">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Главная</span>
+      </button>
+      <button class="bn-btn" data-tab="plan">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8"  y1="2" x2="8"  y2="6"/>
+          <line x1="3"  y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>День</span>
+      </button>
+      <button class="bn-btn" data-tab="goals">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+        </svg>
+        <span>Жизнь</span>
+      </button>
+      <button class="bn-btn" data-tab="diary">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+        </svg>
+        <span>Журнал</span>
+      </button>
+      <!-- Ещё — открывает bottom sheet с остальными вкладками -->
+      <button class="bn-btn" id="bn-more-btn" onclick="window._openMoreMenu()">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="5"  cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <circle cx="19" cy="12" r="1.5" fill="currentColor"/>
+        </svg>
+        <span>Ещё</span>
+      </button>
+    </nav>
+
   </div><!-- /main-area -->
 </div><!-- /s-app -->
 
 <!-- ════════════════════════════════════
-     MODAL (universal — used by all tabs)
+     "ЕЩЁ" BOTTOM SHEET (mobile)
+     ════════════════════════════════════ -->
+<div id="more-sheet-ov" class="more-sheet-ov hidden" onclick="window._closeMoreMenu()">
+  <div class="more-sheet" onclick="event.stopPropagation()">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-title">Ещё</div>
+    <div class="more-sheet-grid">
+      <button class="more-item" data-tab="profile" onclick="window._moreNav('profile')">
+        <svg class="more-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Профиль</span>
+      </button>
+      <button class="more-item" data-tab="analytics" onclick="window._moreNav('analytics')">
+        <svg class="more-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span>Аналитика</span>
+      </button>
+      <button class="more-item" data-tab="ideas" onclick="window._moreNav('ideas')">
+        <svg class="more-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="12" y1="2"  x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93"  x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2"  y1="12" x2="6"  y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93"  y1="19.07" x2="7.76"  y2="16.24"/>
+          <line x1="16.24" y1="7.76"  x2="19.07" y2="4.93"/>
+          <circle cx="12" cy="12" r="4"/>
+        </svg>
+        <span>Идеи</span>
+      </button>
+      <button class="more-item" data-tab="ai-chat" onclick="window._moreNav('ai-chat')">
+        <svg class="more-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        <span>AI-ассистент</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     UNIVERSAL MODAL
      ════════════════════════════════════ -->
 <div id="m-ov" class="m-ov hidden">
   <div class="m-box">
@@ -217,38 +338,26 @@
       <button class="cal-cl" onclick="closeCal()">✕</button>
     </div>
     <div class="cal-grid" id="cal-grid"></div>
-    <div class="cal-det" id="cal-det"></div>
+    <div class="cal-det"  id="cal-det"></div>
   </div>
 </div>
 
-<!-- Toast notification -->
+<!-- Toast -->
 <div class="toast hidden" id="toast"></div>
 
-<!-- ════════════════════════════════════
-     APP ENTRY POINT
-     ════════════════════════════════════ -->
+<!-- App entry point -->
 <script type="module" src="js/app.js"></script>
 
-<!-- PWA Service Worker registration -->
+<!-- PWA Service Worker -->
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      // Используем относительный путь — работает для любого подпути
       navigator.serviceWorker.register("./service-worker.js")
         .then(reg => console.log("[SW] Registered:", reg.scope))
         .catch(err => console.warn("[SW] Registration failed:", err));
     });
   }
 </script>
-
-<!-- Avatar — 3D figure in corner -->
-<div id="avatar-container" class="av-container">
-  <div class="av-toggle-btn" onclick="window._toggleAvatar()" title="Показать/скрыть аватара">
-    <span>🧑</span>
-  </div>
-  <canvas id="avatar-canvas" class="av-canvas" width="220" height="320"></canvas>
-  <div class="av-spinner">⏳ Загружаю...</div>
-</div>
 
 </body>
 </html>
