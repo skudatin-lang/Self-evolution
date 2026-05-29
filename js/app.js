@@ -303,75 +303,96 @@ onAuthStateChanged(auth, async user => {
 //  THEME SYSTEM
 // ════════════════════════════════════════
 const THEMES = {
+  // ── Life OS — тёмный ambient (дефолт) ──
+  // Дизайн-система: #050816 фон, #4DFFB4 акцент, #7C5CFF вторичный
   "life-os": {
     label:"◆ Life OS", dark: true,
-    bg:"#050816", bgs:"#080d1f", bgp:"#0B1023", bgw:"#121933",
-    br:"#4DFFB4", brd:"#2bcc8a", brl:"#80ffcc",
-    go:"#4DFFB4", god:"#2bcc8a", gol:"#80ffcc",
-    cr:"#0d1428", crd:"#0a1020",
-    red:"#FF6B6B", grn:"#4DFFB4", blu:"#5CB8FF",
-    tx:"#E2EAF4", txm:"#8AAFC8", txl:"#4D7A9E",
-    bd:"rgba(77,255,180,0.08)", bds:"rgba(77,255,180,0.18)", sh:"rgba(0,0,0,0.6)",
+    bg:"#050816",  bgs:"#0B1023",  bgp:"#0B1023",  bgw:"#121933",
+    br:"#4DFFB4",  brd:"#2bdb95",  brl:"#7DFFD4",
+    go:"#4DFFB4",  god:"#2bdb95",  gol:"#7DFFD4",
+    cr:"#0B1023",  crd:"#050816",
+    red:"#FF5C8F", grn:"#4DFFB4",  blu:"#5CB8FF",
+    tx:"#EAEEF6",  txm:"#7C9CB8",  txl:"#4A6B8A",
+    bd:"rgba(77,255,180,0.08)", bds:"rgba(77,255,180,0.20)", sh:"rgba(0,0,0,0.65)",
+    acc2:"#7C5CFF", warn:"#FFB84D",
   },
+  // ── Светлая ──
+  // Дизайн-система: #F7F7FB фон, #407CFF акцент, #7C5CFF вторичный
   "light": {
     label:"☀️ Светлая", dark: false,
-    bg:"#EDE3CC", bgs:"#E4D8BB", bgp:"#F5EDD8", bgw:"#FDFAF4",
-    br:"#7B4F1E", brd:"#5A3510", brl:"#A06A2E",
-    go:"#C8963E", god:"#9A6F28", gol:"#E4B96A",
-    cr:"#F5EDD8", crd:"#EAE0C4",
-    red:"#C04030", grn:"#4A8A4A", blu:"#3A6EA8",
-    tx:"#3A2810", txm:"#7B5A30", txl:"#A08050",
-    bd:"rgba(123,79,30,.18)", bds:"rgba(123,79,30,.42)", sh:"rgba(80,40,10,.10)",
+    bg:"#F7F7FB",  bgs:"#EEEEF6",  bgp:"#FFFFFF",  bgw:"#FFFFFF",
+    br:"#407CFF",  brd:"#2563EB",  brl:"#60A5FA",
+    go:"#407CFF",  god:"#2563EB",  gol:"#60A5FA",
+    cr:"#F0F2FA",  crd:"#E3E8F2",
+    red:"#FF5C8F", grn:"#22C55E",  blu:"#407CFF",
+    tx:"#0F172A",  txm:"#475569",  txl:"#94A3B8",
+    bd:"rgba(64,124,255,0.12)", bds:"rgba(64,124,255,0.28)", sh:"rgba(15,23,42,0.08)",
+    acc2:"#7C5CFF", warn:"#F59E0B",
   },
+  // ── Тёмная ──
+  // Дизайн-система: #0A0E1A фон, #4D7CFF акцент, #7C5CFF вторичный
   "dark": {
     label:"🌙 Тёмная", dark: true,
-    bg:"#0F1923", bgs:"#152232", bgp:"#152232", bgw:"#1C2F45",
-    br:"#5BA4CF", brd:"#3D7FA8", brl:"#85C1E9",
-    go:"#00B4D8", god:"#0096B7", gol:"#48CAE4",
-    cr:"#152232", crd:"#1C2F45",
-    red:"#FF6B6B", grn:"#43D9A2", blu:"#5BA4CF",
-    tx:"#E2EAF4", txm:"#8AAFC8", txl:"#4D7A9E",
-    bd:"rgba(0,180,216,.14)", bds:"rgba(0,180,216,.30)", sh:"rgba(0,0,0,.55)",
+    bg:"#0A0E1A",  bgs:"#131827",  bgp:"#131827",  bgw:"#1E2436",
+    br:"#4D7CFF",  brd:"#2563EB",  brl:"#7EA8FF",
+    go:"#4D7CFF",  god:"#2563EB",  gol:"#7EA8FF",
+    cr:"#131827",  crd:"#0A0E1A",
+    red:"#FF5C8F", grn:"#4DFFB4",  blu:"#4D7CFF",
+    tx:"#E8EAF0",  txm:"#8892A4",  txl:"#4A5568",
+    bd:"rgba(77,124,255,0.12)", bds:"rgba(77,124,255,0.28)", sh:"rgba(0,0,0,0.60)",
+    acc2:"#7C5CFF", warn:"#FFB84D",
   },
+  // ── Лесная ──
+  // Дизайн-система: #081408 фон, #62F198 акцент, #4DB6AC вторичный
   "forest": {
     label:"🌲 Лесная", dark: true,
-    bg:"#0D1A0F", bgs:"#152A18", bgp:"#152A18", bgw:"#1E3A22",
-    br:"#4CAF50", brd:"#388E3C", brl:"#81C784",
-    go:"#4CAF50", god:"#388E3C", gol:"#81C784",
-    cr:"#152A18", crd:"#1E3A22",
-    red:"#FF7043", grn:"#AED581", blu:"#4DB6AC",
-    tx:"#E8F5E9", txm:"#A5D6A7", txl:"#66BB6A",
-    bd:"rgba(76,175,80,.18)", bds:"rgba(76,175,80,.38)", sh:"rgba(0,20,5,.55)",
+    bg:"#081408",  bgs:"#112B11",  bgp:"#112B11",  bgw:"#1A3A28",
+    br:"#62F198",  brd:"#3DD672",  brl:"#89F7B0",
+    go:"#62F198",  god:"#3DD672",  gol:"#89F7B0",
+    cr:"#112B11",  crd:"#081408",
+    red:"#FF7043", grn:"#62F198",  blu:"#4DB6AC",
+    tx:"#E8F5E8",  txm:"#86B894",  txl:"#4A7A54",
+    bd:"rgba(98,241,152,0.10)", bds:"rgba(98,241,152,0.24)", sh:"rgba(0,10,4,0.60)",
+    acc2:"#4DB6AC", warn:"#FFB74D",
   },
+  // ── Бриз ──
+  // Дизайн-система: #F0F2F7 фон (светлая), #7ED3F7 акцент, #4AC3F4 вторичный
   "breeze": {
     label:"🌊 Бриз", dark: false,
-    bg:"#E8F4F8", bgs:"#D6EBF5", bgp:"#F0F8FC", bgw:"#FFFFFF",
-    br:"#0277BD", brd:"#01579B", brl:"#0288D1",
-    go:"#0288D1", god:"#0277BD", gol:"#29B6F6",
-    cr:"#F0F8FC", crd:"#D6EBF5",
-    red:"#EF5350", grn:"#26A69A", blu:"#1565C0",
-    tx:"#0D2B3E", txm:"#2E6B8A", txl:"#5B9BB7",
-    bd:"rgba(2,119,189,.18)", bds:"rgba(2,119,189,.40)", sh:"rgba(0,40,80,.10)",
+    bg:"#F0F2F7",  bgs:"#E3E8F2",  bgp:"#FFFFFF",  bgw:"#FFFFFF",
+    br:"#4AC3F4",  brd:"#0EA5E9",  brl:"#7ED3F7",
+    go:"#4AC3F4",  god:"#0EA5E9",  gol:"#7ED3F7",
+    cr:"#EAF6FD",  crd:"#D6EFF9",
+    red:"#FF6B8E", grn:"#34D399",  blu:"#4AC3F4",
+    tx:"#0C1A2E",  txm:"#334E68",  txl:"#627D98",
+    bd:"rgba(74,195,244,0.14)", bds:"rgba(74,195,244,0.32)", sh:"rgba(12,26,46,0.08)",
+    acc2:"#7C5CFF", warn:"#FFB840",
   },
+  // ── Закат ──
+  // Дизайн-система: #1A0014 фон, #FF84B0 акцент, #FF6B8E вторичный
   "sunset": {
     label:"🌇 Закат", dark: true,
-    bg:"#1A0A0F", bgs:"#2A1018", bgp:"#2A1018", bgw:"#3A1822",
-    br:"#FF6B6B", brd:"#E53935", brl:"#FF8A80",
-    go:"#FF6B6B", god:"#E53935", gol:"#FF8A80",
-    cr:"#2A1018", crd:"#3A1822",
-    red:"#FF8A65", grn:"#FFD54F", blu:"#FF80AB",
-    tx:"#FBE9E7", txm:"#FFAB91", txl:"#FF7043",
-    bd:"rgba(255,107,107,.18)", bds:"rgba(255,107,107,.38)", sh:"rgba(80,0,20,.55)",
+    bg:"#1A0014",  bgs:"#2E1020",  bgp:"#2E1020",  bgw:"#3E1F2E",
+    br:"#FF84B0",  brd:"#FF6B8E",  brl:"#FFB3CC",
+    go:"#FF84B0",  god:"#FF6B8E",  gol:"#FFB3CC",
+    cr:"#2E1020",  crd:"#1A0014",
+    red:"#FF6B8E", grn:"#7EF5B5",  blu:"#7EB5FF",
+    tx:"#FDE8F0",  txm:"#C9849C",  txl:"#8A5068",
+    bd:"rgba(255,132,176,0.12)", bds:"rgba(255,132,176,0.28)", sh:"rgba(80,0,40,0.65)",
+    acc2:"#FF6B8E", warn:"#FFD166",
   },
+  // ── Золото ──
+  // Дизайн-система: #1A1408 фон, #FFD166 акцент, #FACD4B вторичный
   "gold": {
     label:"✨ Золото", dark: true,
-    bg:"#0F0A00", bgs:"#1A1200", bgp:"#1A1200", bgw:"#261A00",
-    br:"#FFD700", brd:"#B8860B", brl:"#FFE44D",
-    go:"#FFD700", god:"#B8860B", gol:"#FFE44D",
-    cr:"#1A1200", crd:"#261A00",
-    red:"#FF4500", grn:"#9ACD32", blu:"#4169E1",
-    tx:"#FFF8DC", txm:"#DAA520", txl:"#8B7536",
-    bd:"rgba(255,215,0,.18)", bds:"rgba(255,215,0,.40)", sh:"rgba(0,0,0,.65)",
+    bg:"#1A1408",  bgs:"#261A00",  bgp:"#261A00",  bgw:"#322400",
+    br:"#FFD166",  brd:"#FACD4B",  brl:"#FFE599",
+    go:"#FFD166",  god:"#FACD4B",  gol:"#FFE599",
+    cr:"#261A00",  crd:"#1A1408",
+    red:"#FF7EF5", grn:"#40CFFF",  blu:"#40CFFF",
+    tx:"#FFF8E8",  txm:"#C9A84C",  txl:"#8A7030",
+    bd:"rgba(255,209,102,0.12)", bds:"rgba(255,209,102,0.28)", sh:"rgba(0,0,0,0.70)",
+    acc2:"#FACD4B", warn:"#FF7EF5",
   },
 };
 
@@ -384,11 +405,24 @@ function initTheme() {
   });
 }
 
+// ── Простое осветление/затемнение HEX цвета ──
+function lightenHex(hex, amount) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  const clamp = v => Math.min(255,Math.max(0,v));
+  return "#"+[clamp(r+amount),clamp(g+amount),clamp(b+amount)]
+    .map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+
 function applyPalette(id) {
   const t = THEMES[id] || THEMES["life-os"];
   const root = document.documentElement;
   if (t.dark) root.setAttribute("data-theme","dark");
   else root.removeAttribute("data-theme");
+  // acc2 и warn берём из темы, иначе дефолт
+  const acc2   = t.acc2  || (t.dark ? "#7C5CFF" : "#6B5CE7");
+  const acc2l  = t.acc2  ? lightenHex(t.acc2, 20)  : "#9E8CFF";
+  const acc2d  = t.acc2  ? lightenHex(t.acc2, -20) : "#5a3dcc";
+  const warn   = t.warn  || (t.dark ? "#FFB84D" : "#E8924A");
   const vars = {
     "--bg": t.bg, "--bg-s": t.bgs, "--bg-p": t.bgp, "--bg-w": t.bgw,
     "--br": t.br, "--br-d": t.brd, "--br-l": t.brl,
@@ -397,9 +431,8 @@ function applyPalette(id) {
     "--red": t.red, "--grn": t.grn, "--blu": t.blu,
     "--tx": t.tx, "--tx-m": t.txm, "--tx-l": t.txl,
     "--bd": t.bd, "--bd-s": t.bds, "--sh": t.sh,
-    "--acc2": t.dark ? "#7C5CFF" : "#6B5CE7",
-    "--acc2-l": "#9E8CFF", "--acc2-d": "#5a3dcc",
-    "--warn": t.dark ? "#FFB84D" : "#E8924A",
+    "--acc2": acc2, "--acc2-l": acc2l, "--acc2-d": acc2d,
+    "--warn": warn,
   };
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
   const emoji = t.label.split(" ")[0];
