@@ -39,103 +39,6 @@ export function initDiary() { registerTab("diary", renderDiary); }
 // ════════════════════════════════════════
 //  SIDEBAR
 // ════════════════════════════════════════
-function renderDiarySidebar(entries, templates) {
-  const td        = dstr(new Date());
-  const todayCnt  = entries.filter(x => x.date === td).length;
-  const allTags   = [...new Set(entries.flatMap(x => x.tags || []))];
-  const hasKey    = !!localStorage.getItem("lc-ai-key");
-  const prof      = JSON.parse(localStorage.getItem("lc-ai-profile") || "{}");
-  const lastTime  = localStorage.getItem("lc-ai-life-last") || "";
-
-  document.getElementById("sb-body").innerHTML = `
-    <div class="sb-tiles-grid">
-      <button class="sb-tile ${diaryMode==="day"?"on":""}"
-        onclick="window._diaryMode('day')">
-        <div class="sb-tile-ico">📖</div>
-        <div class="sb-tile-lbl">Сегодня</div>
-        <div class="sb-tile-cnt">${todayCnt}</div>
-      </button>
-      <button class="sb-tile ${diaryMode==="all"?"on":""}"
-        onclick="window._diaryMode('all')">
-        <div class="sb-tile-ico">📚</div>
-        <div class="sb-tile-lbl">Все записи</div>
-        <div class="sb-tile-cnt">${entries.length}</div>
-      </button>
-      <button class="sb-tile ${diaryMode==="templates"?"on":""}"
-        onclick="window._diaryMode('templates')">
-        <div class="sb-tile-ico">📄</div>
-        <div class="sb-tile-lbl">Шаблоны</div>
-        <div class="sb-tile-cnt">${templates.length}</div>
-      </button>
-      <button class="sb-tile ${diaryMode==="search"?"on":""}"
-        onclick="window._diaryMode('search')">
-        <div class="sb-tile-ico">🔍</div>
-        <div class="sb-tile-lbl">Поиск</div>
-        <div class="sb-tile-cnt">${allTags.length}</div>
-      </button>
-    </div>
-
-    <!-- AI Панель -->
-    <div class="ai-panel">
-      <div class="ai-panel-hd">
-        <span class="ai-panel-ico">◆</span>
-        <span class="ai-panel-ttl">AI-анализ жизни</span>
-        <button class="ai-cfg-toggle" onclick="window._lcAiToggleCfg()" title="Настройки">⚙</button>
-      </div>
-      <div class="lc-ai-desc">Наблюдает паттерны, анализирует состояние, помогает видеть причинно-следственные связи.</div>
-      ${lastTime ? `<div class="lc-ai-last">Последний анализ: ${lastTime}</div>` : ""}
-
-      <!-- Настройки -->
-      <div id="lc-ai-cfg"
-        style="display:${hasKey && prof.chronotype ? "none" : "flex"};flex-direction:column;gap:8px;margin-top:8px;">
-        <div class="ai-key-row">
-          <input class="inp ai-key-inp" id="lc-key-inp" type="password"
-            placeholder="ProxyAPI ключ"
-            value="${localStorage.getItem("lc-ai-key") || ""}"/>
-          <button class="ai-key-save" onclick="window._lcAiSaveKey()">OK</button>
-        </div>
-        <div class="ai-cfg-grid">
-          <div class="ai-cfg-item">
-            <label class="ai-cfg-lbl">Хронотип</label>
-            <select class="sel ai-cfg-sel" id="lc-chron">
-              <option value="lark" ${prof.chronotype==="lark"?"selected":""}>🌅 Жаворонок</option>
-              <option value="owl"  ${prof.chronotype==="owl" ?"selected":""}>🦉 Сова</option>
-            </select>
-          </div>
-          <div class="ai-cfg-item">
-            <label class="ai-cfg-lbl">Возраст</label>
-            <input class="inp ai-cfg-inp" id="lc-age" type="number"
-              placeholder="30" value="${prof.age || ""}"/>
-          </div>
-        </div>
-        <button class="ai-key-save" style="width:100%"
-          onclick="window._lcAiSaveProfile()">Сохранить</button>
-      </div>
-
-      <div id="lc-ai-cfg-saved"
-        style="display:${hasKey && prof.chronotype ? "flex" : "none"}"
-        class="ai-key-saved-row">
-        <span>${prof.chronotype==="owl"?"🦉 Сова":"🌅 Жаворонок"}${prof.age?" · "+prof.age+" лет":""}</span>
-        <button class="ai-key-change" onclick="window._lcAiToggleCfg()">✎</button>
-      </div>
-
-      <!-- Режимы анализа -->
-      <div class="lc-ai-modes" style="margin-top:8px;">
-        <button class="lc-mode-btn ${lcAiMode==="daily"?"active":""}"
-          id="lc-mode-daily" onclick="window._lcSetMode('daily')">День</button>
-        <button class="lc-mode-btn ${lcAiMode==="weekly"?"active":""}"
-          id="lc-mode-weekly" onclick="window._lcSetMode('weekly')">Неделя</button>
-        <button class="lc-mode-btn ${lcAiMode==="desires"?"active":""}"
-          id="lc-mode-desires" onclick="window._lcSetMode('desires')">Желания</button>
-      </div>
-
-      <button class="ai-run-btn" id="lc-ai-run-btn"
-        onclick="window._lcRunAnalysis()">
-        ◆ Запустить анализ
-      </button>
-      <div class="ai-result" id="lc-ai-result"></div>
-    </div>`;
-}
 
 // ════════════════════════════════════════
 //  ОСНОВНОЙ КОНТЕНТ
@@ -379,7 +282,6 @@ function diaryCard(x) {
 export async function renderDiary() {
   document.getElementById("tb-ttl").textContent = "Журнал";
   const [entries, templates] = await Promise.all([getDiary(), getTemplates()]);
-  renderDiarySidebar(entries, templates);
   renderDiaryMain(entries, templates);
 }
 
@@ -389,7 +291,6 @@ export async function renderDiary() {
 window._diaryMode = async mode => {
   diaryMode = mode;
   const [entries, templates] = await Promise.all([getDiary(), getTemplates()]);
-  renderDiarySidebar(entries, templates);
   renderDiaryMain(entries, templates);
 };
 

@@ -51,35 +51,6 @@ export function initIdeas() { registerTab("ideas", renderIdeas); }
 // ════════════════════════════════════════
 //  SIDEBAR
 // ════════════════════════════════════════
-function renderIdeasSidebar(all) {
-  const td       = dstr(new Date());
-  const dayCnt   = all.filter(x => x.date === td).length;
-  const realized = all.filter(x => x.realized).length;
-
-  document.getElementById("sb-body").innerHTML = `
-    <div class="sb-tiles-grid">
-      <button class="sb-tile on">
-        <div class="sb-tile-ico">💡</div>
-        <div class="sb-tile-lbl">Всего идей</div>
-        <div class="sb-tile-cnt">${all.length}</div>
-      </button>
-      <button class="sb-tile">
-        <div class="sb-tile-ico">✓</div>
-        <div class="sb-tile-lbl">Реализовано</div>
-        <div class="sb-tile-cnt">${realized}</div>
-      </button>
-      <button class="sb-tile">
-        <div class="sb-tile-ico">📅</div>
-        <div class="sb-tile-lbl">Сегодня</div>
-        <div class="sb-tile-cnt">${dayCnt}</div>
-      </button>
-      <button class="sb-tile">
-        <div class="sb-tile-ico">🏷</div>
-        <div class="sb-tile-lbl">Категорий</div>
-        <div class="sb-tile-cnt">${new Set(all.map(x=>x.category).filter(Boolean)).size}</div>
-      </button>
-    </div>`;
-}
 
 // ════════════════════════════════════════
 //  ОСНОВНОЙ КОНТЕНТ
@@ -257,7 +228,6 @@ function renderCollections(body, all) {
 export async function renderIdeas() {
   document.getElementById("tb-ttl").textContent = "Идеи";
   const all = await getIdeas();
-  renderIdeasSidebar(all);
   renderIdeasMain(all);
 }
 

@@ -416,7 +416,8 @@ export async function renderGoals() {
   const tasks    = fmtShowDone ? allTasks  : allTasks.filter(t => !t.done);
   const gFiltered = fmtShowDone ? goals     : goals.filter(g => !g.done);
   const pFiltered = fmtShowDone ? projects  : projects.filter(p => !p.done);
-  renderSidebar(mmFlat.find(n => n.id === mmSel) || null);
+  // При начальном рендере не перезаписываем сайдбар — только при клике на узел
+  if (mmSel) renderSidebar(mmFlat.find(n => n.id === mmSel) || null);
 
   const wrap = document.getElementById("mm-wrap");
   if (!wrap) return; // вкладка не активна

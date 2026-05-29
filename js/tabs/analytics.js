@@ -102,8 +102,6 @@ export async function renderAnalytics() {
   if (!body) return;
 
   // Очищаем sidebar
-  const sb = document.getElementById("sb-body");
-  if (sb) sb.innerHTML = "";
 
   const [data, tasks, goals] = await Promise.all([
     buildStateData(analyticsPeriod),
