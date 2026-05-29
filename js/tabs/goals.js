@@ -505,6 +505,9 @@ export async function renderGoals() {
 
   drawMM();
   if (!eventsSet) { setupEvents(wrap); eventsSet = true; }
+
+  // Заполняем блок "Ближайшие шаги" под картой
+  renderGoalsSteps(goals, allTasks);
 }
 
 // ══════════════════════════════════════════
@@ -1129,4 +1132,121 @@ window._mmQuickNewProject = async (nodeId) => {
       // Обновляем карту
       await renderGoals();
     });
+};
+
+// ════════════════════════════════════════
+//  БЛОК "БЛИЖАЙШИЕ ШАГИ" под картой
+//  По скрину: иконка + название цели + прогресс-бар + %
+// ════════════════════════════════════════
+function renderGoalsSteps(goals, tasks) {
+  const panel = document.getElementById("goals-steps-panel");
+  if (!panel) return;
+
+  const activeGoals = goals.filter(g => !g.done);
+  if (!activeGoals.length) { panel.innerHTML = ""; return; }
+
+  // Считаем прогресс по задачам каждой цели
+  const withProgress = activeGoals.map((g, i) => {
+    const gTasks  = tasks.filter(t => t.goalId === g.id);
+    const done    = gTasks.filter(t => t.done).length;
+    const total   = gTasks.length;
+    const pct     = total > 0 ? Math.round(done / total * 100) : 0;
+    // Цвет прогресс-бара: зелёный >60%, жёлтый >30%, красный <=30%
+    const color   = pct >= 60 ? "#4DFFB4" : pct >= 30 ? "#FFB84D" : "#FF6B6B";
+    return { g, pct, color, icon: GCOLS[i % GCOLS.length] };
+  }).sort((a, b) => b.pct - a.pct); // топ по прогрессу сначала
+
+  const shown = withProgress.slice(0, 5);
+
+  panel.innerHTML = `
+    <div class="goals-steps-title">Ближайшие шаги</div>
+    ${shown.map(({ g, pct, color }) => `
+      <div class="goal-step-row" onclick="window._openGoalDetail?.('${g.id}')">
+        <div class="goal-step-ico" style="border:1.5px solid ${color}40">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="${color}" stroke-width="2"/>
+            <circle cx="12" cy="12" r="4"  fill="${color}"/>
+          </svg>
+        </div>
+        <div class="goal-step-body">
+          <div class="goal-step-name">${esc(g.title)}</div>
+          <div class="goal-step-bar-wrap">
+            <div class="goal-step-bar" style="width:${pct}%;background:${color};"></div>
+          </div>
+        </div>
+        <span class="goal-step-pct" style="color:${color}">${pct}%</span>
+      </div>`).join("")}
+    ${withProgress.length > 5 ? `
+      <button class="goals-steps-more" onclick="window._goalsView('list')">
+        Смотреть все цели →
+      </button>` : ""}
+  `;
+}
+
+// View switcher handler (карта / список)
+window._goalsView = async (view) => {
+  const mapView  = document.getElementById("goals-map-view");
+  const listView = document.getElementById("goals-list-view");
+  const mapBtn   = document.getElementById("gvs-map");
+  const listBtn  = document.getElementById("gvs-list");
+
+  if (!mapView || !listView) return;
+
+  if (view === "map") {
+    mapView.style.display  = "";
+    listView.style.display = "none";
+    mapBtn?.classList.add("on");
+    listBtn?.classList.remove("on");
+    // Скрываем зум-кнопки только если нужно
+  } else {
+    mapView.style.display  = "none";
+    listView.style.display = "";
+    mapBtn?.classList.remove("on");
+    listBtn?.classList.add("on");
+    // Рендерим список целей
+    renderGoalsList(listView);
+  }
+};
+
+async function renderGoalsList(container) {
+  const { getGoals, getTasks, getProjects } = await import("../db.js");
+  const { GCOLS } = await import("../utils.js");
+  const [goals, tasks, projects] = await Promise.all([getGoals(), getTasks(), getProjects()]);
+
+  const active = goals.filter(g => !g.done);
+  if (!active.length) {
+    container.innerHTML = `<div class="plan-empty"><div class="plan-empty-ico">🎯</div><div class="plan-empty-text">Целей нет</div><button class="plan-empty-add" onclick="openNewModal('goal',null,null,'goals')">+ Добавить цель</button></div>`;
+    return;
+  }
+
+  container.innerHTML = active.map((g, i) => {
+    const color    = GCOLS[i % GCOLS.length];
+    const gTasks   = tasks.filter(t => t.goalId === g.id);
+    const doneCnt  = gTasks.filter(t => t.done).length;
+    const total    = gTasks.length;
+    const pct      = total > 0 ? Math.round(doneCnt / total * 100) : 0;
+    const pColor   = pct >= 60 ? "#4DFFB4" : pct >= 30 ? "#FFB84D" : "#FF6B6B";
+    const projCnt  = projects.filter(p => p.goalId === g.id && !p.done).length;
+    return `
+      <div class="icard" style="border-left:3px solid ${color}">
+        <div class="ic-body" onclick="window._openGoalDetail?.('${g.id}')">
+          <div class="ic-ttl">${esc(g.title)}</div>
+          ${g.desc ? `<div style="font-size:12px;color:var(--tx-m);margin-top:3px">${esc(g.desc.slice(0,100))}</div>` : ""}
+          <div style="margin:8px 0 4px;height:3px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${pColor};border-radius:99px;transition:width .5s ease"></div>
+          </div>
+          <div class="ic-meta">
+            <span class="ic-tag" style="background:${color}22;color:${color}">${pct}%</span>
+            ${projCnt ? `<span class="ic-tag tag-proj">${projCnt} проектов</span>` : ""}
+            <span class="ic-tag tag-goal">${total - doneCnt} задач</span>
+          </div>
+        </div>
+      </div>`;
+  }).join("") + `<button class="fab" onclick="openNewModal('goal',null,null,'goals')">+</button>`;
+}
+
+window._openGoalDetail = async id => {
+  window.switchTab?.("goals");
+  const node = document.querySelector(`[data-nid="${id}"]`);
+  if (node) node.click();
 };
