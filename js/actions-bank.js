@@ -163,4 +163,3 @@ window._bankAddToDay = (id, title) => {
   document.getElementById("bank-dialog")?.remove();
 };
 
-export { openBankDialog };
