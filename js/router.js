@@ -15,8 +15,11 @@ const TAB_TITLES = {
   dashboard: "Главная",
   plan:      "День",
   goals:     "Жизнь",
+  diary:     "Журнал",
+  profile:   "Профиль",
+  analytics: "Аналитика",
   ideas:     "Идеи",
-  diary:     "Журнал"
+  "ai-chat": "AI-ассистент",
 };
 
 // ── Tab renderers registry ──
