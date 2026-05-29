@@ -382,42 +382,58 @@ async function renderPlanMain(tasks, goals, projects) {
     const toDate    = s => s ? new Date(s.slice(0,10) + "T00:00:00") : null;
 
     // ── Фильтр задач для выбранного дня ──
+    // Показываем ВСЕ задачи этого дня — и выполненные и нет
+    // Это позволяет видеть реальную картину любого прошлого дня
     const dayTasks = tasks.filter(t => {
       if (t.displaced || parentIds.has(t.id)) return false;
       const isRecurring = t.recurrence && t.recurrence.type !== "none";
+
       if (isRecurring) {
-        if (t.done && t.completedDate === targetStr) return false;
+        // Для повторяющихся: показываем если день совпадает
         return recurMatchesDate(t, tgt);
       }
-      if (t.done) return false;
-      if (showAll) return true;
+
+      if (showAll) return !t.done || t.completedDate === targetStr;
+
+      // Задача запланирована на этот день
       if (t.date === targetStr) return true;
+
+      // Задача выполнена в этот день
+      if (t.done && t.completedDate === targetStr) return true;
+
+      // Задача в диапазоне дат (startDate → deadline)
       const start = toDate(t.startDate
         ? dstr(t.startDate.toDate ? t.startDate.toDate() : new Date(t.startDate))
         : t.date);
-      const end = t.deadline ? toDate(dstr(t.deadline.toDate ? t.deadline.toDate() : new Date(t.deadline))) : null;
+      const end = t.deadline
+        ? toDate(dstr(t.deadline.toDate ? t.deadline.toDate() : new Date(t.deadline)))
+        : null;
       if (start && end && start <= tgt && tgt <= end) return true;
+
       return false;
     }).sort((a, b) => {
+      // Сначала невыполненные, потом выполненные
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (a.priority === "high" && b.priority !== "high") return -1;
+      if (b.priority === "high" && a.priority !== "high") return 1;
       if (a.deadline && b.deadline)
-        return (a.deadline.toDate?.() ?? new Date(a.deadline)) > (b.deadline.toDate?.() ?? new Date(b.deadline)) ? 1 : -1;
+        return (a.deadline.toDate?.() ?? new Date(a.deadline)) >
+               (b.deadline.toDate?.() ?? new Date(b.deadline)) ? 1 : -1;
       if (a.deadline) return -1;
       if (b.deadline) return 1;
       return (a.date || "") > (b.date || "") ? 1 : -1;
     });
 
-    // Выполненные сегодня
-    const doneTasks = tasks.filter(t =>
-      t.done && !t.displaced &&
-      (t.completedDate === targetStr || (!t.completedDate && t.date === targetStr))
-    );
+    // Разбиваем на невыполненные и выполненные для выбранного дня
+    const openTasks = dayTasks.filter(t => !t.done);
+    const doneTasks = dayTasks.filter(t => t.done);
 
     // ── Разбивка на главные (high/starred) и все остальные ──
-    const mainTasks  = dayTasks.filter(t => t.priority === "high" || t.isMain).slice(0, 3);
-    const otherTasks = dayTasks.filter(t => !mainTasks.find(m => m.id === t.id));
+    const mainTasks  = openTasks.filter(t => t.priority === "high" || t.isMain).slice(0, 3);
+    const otherTasks = openTasks.filter(t => !mainTasks.find(m => m.id === t.id));
 
     // Ключевая задача (фокус дня)
-    const keyTask = getKeyTask(dayTasks, targetStr);
+    const keyTask = getKeyTask(openTasks, targetStr);
 
     // ── Месяц и год ──
     const months = ["Январь","Февраль","Март","Апрель","Май","Июнь",
@@ -455,25 +471,28 @@ async function renderPlanMain(tasks, goals, projects) {
       </div>
 
       <!-- Блок: Все задачи -->
-      ${(otherTasks.length || doneTasks.length) ? `
       <div class="plan-all-tasks">
-        <div class="plan-all-tasks-title">Все задачи</div>
-        ${otherTasks.map(t => renderTaskRow(t, false)).join("")}
-        ${doneTasks.map(t => renderTaskRow(t, true)).join("")}
-        ${!otherTasks.length && !doneTasks.length
-          ? `<div class="plan-empty"><div class="plan-empty-ico">✓</div>
-             <div class="plan-empty-text">Все выполнено</div></div>`
-          : ""}
-      </div>` : `
-      <div class="plan-all-tasks">
-        <div class="plan-all-tasks-title">Все задачи</div>
-        <div class="plan-empty">
-          <div class="plan-empty-ico">📋</div>
-          <div class="plan-empty-text">Задач нет</div>
-          <button class="plan-empty-add"
-            onclick="window.openNewModal('task',null,null,'plan','${targetStr}')">+ Добавить задачу</button>
+        <div class="plan-all-tasks-title">
+          Все задачи
+          ${doneTasks.length ? `<span style="margin-left:8px;font-size:11px;color:var(--go);font-family:var(--fd)">✓ ${doneTasks.length} выполнено</span>` : ""}
         </div>
-      </div>`}
+        ${otherTasks.length || doneTasks.length ? `
+          ${otherTasks.map(t => renderTaskRow(t, false)).join("")}
+          ${doneTasks.length ? `
+            <div class="plan-section-label" style="margin:10px 0 4px;font-size:10px">
+              ВЫПОЛНЕНО
+            </div>
+            ${doneTasks.map(t => renderTaskRow(t, true)).join("")}
+          ` : ""}
+        ` : `
+          <div class="plan-empty">
+            <div class="plan-empty-ico">📋</div>
+            <div class="plan-empty-text">Задач нет</div>
+            <button class="plan-empty-add"
+              onclick="window.openNewModal('task',null,null,'plan','${targetStr}')">+ Добавить задачу</button>
+          </div>
+        `}
+      </div>
 
       <!-- Блок: Фокус дня -->
       <div class="plan-focus-card" onclick="window.switchTab('ai-chat')">
@@ -506,9 +525,18 @@ async function renderPlanMain(tasks, goals, projects) {
     `;
 
     // Строим навигатор
+    // datesWT — даты где есть задачи (для точки под числом)
     const datesWT = new Set(tasks.filter(x => x.date).map(x => x.date));
     buildDayNav(planDate, datesWT, showAll, "plan-dn",
-      d => { planDate = d; showAll = false; renderPlan(); },
+      d => {
+        // Парсим дату в локальном времени (не UTC) — важно для правильного отображения
+        const str = typeof d === "string" ? d : dstr(d);
+        const [y, m, day] = str.split("-").map(Number);
+        planDate = new Date(y, m - 1, day);
+        planDate.setHours(0,0,0,0);
+        showAll = false;
+        renderPlan();
+      },
       () => { showAll = !showAll; renderPlan(); }
     );
 
