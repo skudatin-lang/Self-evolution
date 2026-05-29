@@ -525,7 +525,9 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
     if (cancelBtn) cancelBtn.textContent = "Отмена";
   }, 0);
 
-  openModal(title || "Новая задача", "", async () => {
+  // Передаём HTML сразу в openModal — так m-body не очищается
+  const _taskHtml = $("m-body").innerHTML;
+  openModal(title || "Новая задача", _taskHtml, async () => {
     const titleVal = $("t-title")?.value.trim();
     if (!titleVal) { toast("⚠️ Введите название задачи"); return; }
     const { goalId, projId } = getLinkValue("t-link-field");
@@ -711,7 +713,8 @@ export async function editTaskModal(id) {
     if (saveBtn) saveBtn.textContent = "Сохранить";
   }, 0);
 
-  openModal("Редактировать задачу", "", async () => {
+  const _etHtml = $("m-body").innerHTML;
+  openModal("Редактировать задачу", _etHtml, async () => {
     const { goalId, projId } = getLinkValue("et-link-field");
     const recType   = $("et-recurrence-type")?.value || "none";
     const untilVal  = recType !== "none" ? (dtpVal("et-until") || null) : null;
@@ -844,7 +847,8 @@ export async function buildGoalModal(title) {
     if (saveBtn) saveBtn.textContent = "Создать цель";
   }, 0);
 
-  openModal(title || "Новая цель", "", async () => {
+  const _goalHtml = $("m-body").innerHTML;
+  openModal(title || "Новая цель", _goalHtml, async () => {
     const t = $("g-title")?.value.trim();
     if (!t) { toast("⚠️ Введите название цели"); return; }
     const keyResults = [...($("g-kr-list")?.querySelectorAll(".mf-subtask-row input")||[])].map(i=>i.value.trim()).filter(Boolean);
@@ -960,7 +964,8 @@ export async function buildProjectModal(title, defGoalId = null) {
     if (saveBtn) saveBtn.textContent = "Создать проект";
   }, 0);
 
-  openModal(title || "Новый проект", "", async () => {
+  const _projHtml = $("m-body").innerHTML;
+  openModal(title || "Новый проект", _projHtml, async () => {
     const t = $("p-title")?.value.trim();
     if (!t) { toast("⚠️ Введите название"); return; }
     const { goalId } = getLinkValue("p-link-field");
@@ -1021,7 +1026,8 @@ export async function buildIdeaModal(title, defaultDate = null) {
     if (saveBtn) saveBtn.textContent = "Сохранить идею";
   }, 0);
 
-  openModal(title || "Новая идея", "", async () => {
+  const _ideaHtml = $("m-body").innerHTML;
+  openModal(title || "Новая идея", _ideaHtml, async () => {
     const t = $("i-title")?.value.trim();
     if (!t) { toast("⚠️ Введите заголовок"); return; }
     const { goalId, projId } = getLinkValue("idea-link-field");
@@ -1079,7 +1085,8 @@ export async function editIdeaModal(id) {
     if (saveBtn) saveBtn.textContent = "Сохранить";
   }, 0);
 
-  openModal("Редактировать идею", "", async () => {
+  const _eiHtml = $("m-body").innerHTML;
+  openModal("Редактировать идею", _eiHtml, async () => {
     const t = $("ei-title")?.value.trim();
     if (!t) { toast("⚠️ Введите заголовок"); return; }
     const { goalId, projId } = getLinkValue("ei-link-field");
@@ -1241,7 +1248,8 @@ export async function buildDiaryModal(title, tmpl = null, defaultDate = null) {
     list.insertBefore(item, addBtn);
   };
 
-  openModal(title || "Новая запись в дневник", "", async () => {
+  const _diaryHtml = $("m-body").innerHTML;
+  openModal(title || "Новая запись в дневник", _diaryHtml, async () => {
     const t = $("d-title")?.value.trim();
     if (!t) { toast("⚠️ Введите заголовок"); return; }
     const energyPos = [...($("d-energy-pos")?.querySelectorAll(".mf-energy-text")||[])].map(e=>e.textContent.trim()).filter(Boolean);
@@ -1344,7 +1352,8 @@ export async function editDiaryModal(id) {
     $("ed-text")?.addEventListener("input", () => { $("ed-text-cnt").textContent = $("ed-text").value.length; });
   }, 0);
 
-  openModal("Редактировать запись", "", async () => {
+  const _edHtml = $("m-body").innerHTML;
+  openModal("Редактировать запись", _edHtml, async () => {
     const t = $("ed-title")?.value.trim();
     if (!t) { toast("⚠️ Введите заголовок"); return; }
     const energyPos = [...($("ed-energy-pos")?.querySelectorAll(".mf-energy-text")||[])].map(e=>e.textContent.trim()).filter(Boolean);
