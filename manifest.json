@@ -1,7 +1,7 @@
 {
-  "name": "Life Control",
-  "short_name": "Life Control",
-  "description": "Система наблюдения за собственной жизнью",
+  "name": "Life Evolution",
+  "short_name": "Life Evolution",
+  "description": "Система эволюции личности и наблюдения за жизнью",
   "start_url": "/Self-evolution/",
   "scope": "/Self-evolution/",
   "display": "standalone",
