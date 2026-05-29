@@ -1,0 +1,38 @@
+{
+  "name": "Life Control",
+  "short_name": "Life Control",
+  "description": "Система наблюдения за собственной жизнью",
+  "start_url": "/Self-evolution/",
+  "scope": "/Self-evolution/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050816",
+  "theme_color": "#050816",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/Self-evolution/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Self-evolution/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/Self-evolution/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/Self-evolution/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

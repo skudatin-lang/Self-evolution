@@ -1,41 +1,46 @@
 // ════════════════════════════════════════
-//  SERVICE WORKER — Life-control PWA
-//  service-worker.js (в корне проекта)
+//  SERVICE WORKER — Life Control v3
+//  service-worker.js (в корне репозитория)
+//  Репозиторий: /Self-evolution/
 // ════════════════════════════════════════
 
-const CACHE_NAME = "life-control-v3";
+const CACHE_NAME = "self-evolution-v3";
+const BASE = "/Self-evolution";
 
 const STATIC_ASSETS = [
-  ".",
-  "./index.html",
-  "./css/main.css",
-  "./js/app.js",
-  "./js/firebase.js",
-  "./js/db.js",
-  "./js/modal.js",
-  "./js/router.js",
-  "./js/forms.js",
-  "./js/calendar.js",
-  "./js/storage.js",
-  "./js/utils.js",
-  "./js/tabs/dashboard.js",
-  "./js/tabs/plan.js",
-  "./js/tabs/goals.js",
-  "./js/tabs/ideas.js",
-  "./js/tabs/diary.js",
-  "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png"
+  BASE + "/",
+  BASE + "/index.html",
+  BASE + "/css/main.css",
+  BASE + "/js/app.js",
+  BASE + "/js/firebase.js",
+  BASE + "/js/db.js",
+  BASE + "/js/modal.js",
+  BASE + "/js/router.js",
+  BASE + "/js/forms.js",
+  BASE + "/js/calendar.js",
+  BASE + "/js/storage.js",
+  BASE + "/js/utils.js",
+  BASE + "/js/survey.js",
+  BASE + "/js/ai-plan.js",
+  BASE + "/js/avatar.js",
+  BASE + "/js/profile.js",
+  BASE + "/js/actions-bank.js",
+  BASE + "/js/tabs/dashboard.js",
+  BASE + "/js/tabs/plan.js",
+  BASE + "/js/tabs/goals.js",
+  BASE + "/js/tabs/ideas.js",
+  BASE + "/js/tabs/diary.js",
+  BASE + "/manifest.json",
+  BASE + "/icons/icon-192.png",
+  BASE + "/icons/icon-512.png"
 ];
 
 // ── Установка: кешируем статику ──
 self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    }).catch(err => {
-      console.warn("[SW] Cache install error:", err);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(STATIC_ASSETS))
+      .catch(err => console.warn("[SW] Cache install error:", err))
   );
   self.skipWaiting();
 });
@@ -53,11 +58,10 @@ self.addEventListener("activate", event => {
 });
 
 // ── Fetch: сначала сеть, при ошибке — кеш ──
-// Firebase и Google Fonts загружаем только из сети
 self.addEventListener("fetch", event => {
   const url = event.request.url;
 
-  // Пропускаем Firebase-запросы и Chrome-расширения — только сеть
+  // Firebase, Google APIs — только сеть, не кешируем
   if (
     url.includes("firestore.googleapis.com") ||
     url.includes("firebase") ||
@@ -65,29 +69,27 @@ self.addEventListener("fetch", event => {
     url.includes("googleapis.com") ||
     url.startsWith("chrome-extension")
   ) {
-    return; // браузер обработает сам
+    return;
   }
 
-  // Для остального: сначала сеть, при ошибке — кеш
+  // Всё остальное: сначала сеть, при ошибке — кеш
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        // Кешируем свежий ответ
         if (response && response.status === 200 && event.request.method === "GET") {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
       })
-      .catch(() => {
-        // Нет сети — отдаём из кеша
-        return caches.match(event.request).then(cached => {
+      .catch(() =>
+        caches.match(event.request).then(cached => {
           if (cached) return cached;
-          // Если нет даже в кеше — отдаём index.html (для SPA)
+          // Для навигации — отдаём index.html из кеша
           if (event.request.mode === "navigate") {
-            return caches.match("/index.html");
+            return caches.match(BASE + "/index.html");
           }
-        });
-      })
+        })
+      )
   );
 });
