@@ -34,7 +34,8 @@ import { openProfileDialog }             from "./profile.js";
 import { openBankDialog }                from "./actions-bank.js";
 import { MONTHS }                        from "./utils.js";
 import "./survey.js";
-import "./ai-plan.js";
+// ai-plan.js — загружается динамически (lazy) чтобы не блокировать старт приложения
+// Файл: js/ai-plan.js
 
 import {
   GoogleAuthProvider, OAuthProvider,
@@ -278,6 +279,11 @@ onAuthStateChanged(auth, async user => {
       window._openProfileDialog = openProfileDialog;
       window._openBankDialog    = openBankDialog;
 
+      // Загружаем ai-plan динамически — не блокирует старт если файл отсутствует
+      import("./ai-plan.js").catch(() => {
+        console.warn("[app] ai-plan.js не найден — функция утреннего плана недоступна");
+      });
+
       // Cleanup recurring task children
       cleanupRecurringChildren().then(n => {
         if (n > 0) { refreshAll(); console.log(`[app] Cleaned ${n} recurring children`); }
@@ -416,8 +422,11 @@ function lightenHex(hex, amount) {
 function applyPalette(id) {
   const t = THEMES[id] || THEMES["life-os"];
   const root = document.documentElement;
+  // Устанавливаем data-palette для CSS-тем (переключает ВСЕ переменные)
+  root.setAttribute("data-palette", id);
+  // data-theme="dark/light" для обратной совместимости
   if (t.dark) root.setAttribute("data-theme","dark");
-  else root.removeAttribute("data-theme");
+  else { root.removeAttribute("data-theme"); root.setAttribute("data-theme","light"); }
   // acc2 и warn берём из темы, иначе дефолт
   const acc2   = t.acc2  || (t.dark ? "#7C5CFF" : "#6B5CE7");
   const acc2l  = t.acc2  ? lightenHex(t.acc2, 20)  : "#9E8CFF";
@@ -435,6 +444,12 @@ function applyPalette(id) {
     "--warn": warn,
   };
   for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+  // Glow-переменные вычисляем из акцента темы
+  const goR = parseInt(t.go.slice(1,3),16)||77, goG = parseInt(t.go.slice(3,5),16)||255, goB = parseInt(t.go.slice(5,7),16)||180;
+  const a2R = parseInt(acc2.slice(1,3),16)||124, a2G = parseInt(acc2.slice(3,5),16)||92,  a2B = parseInt(acc2.slice(5,7),16)||255;
+  root.style.setProperty("--glow-go",   `0 0 24px rgba(${goR},${goG},${goB},${t.dark?0.22:0.14})`);
+  root.style.setProperty("--glow-acc2", `0 0 24px rgba(${a2R},${a2G},${a2B},${t.dark?0.28:0.16})`);
+  root.style.setProperty("--glow-soft", `0 8px 40px rgba(0,0,0,${t.dark?0.55:0.08})`);
   const emoji = t.label.split(" ")[0];
   ["theme-toggle","nav-theme-btn"].forEach(bid => {
     const b = $(bid);
@@ -454,10 +469,11 @@ function openPalettePicker() {
       <div class="pal-title">🎨 Выбери палитру</div>
       ${Object.entries(THEMES).map(([id, t]) => `
         <button class="pal-btn ${id===cur?"on":""}" onclick="window._setPalette('${id}')">
+          <span class="pal-dot" style="background:${t.bg};border:2px solid ${t.go}"></span>
           <span class="pal-dot" style="background:${t.go}"></span>
-          <span class="pal-dot" style="background:${t.grn}"></span>
+          <span class="pal-dot" style="background:${t.acc2||'#7C5CFF'}"></span>
           <span class="pal-lbl">${t.label}</span>
-          ${t.dark ? '<span class="pal-dark-badge">🌙</span>' : ''}
+          ${t.dark ? '<span class="pal-dark-badge">🌙</span>' : '<span class="pal-dark-badge" style="opacity:.5">☀️</span>'}
         </button>`).join("")}
     </div>`;
   document.body.appendChild(picker);
