@@ -7,80 +7,73 @@
    ════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════
-   DESIGN TOKENS — LIGHT THEME (legacy, kept for switching)
+   DESIGN TOKENS — дефолт Life OS
+   Все темы применяются через JS applyPalette()
    ═══════════════════════════════════════ */
 :root {
-  /* ── Backgrounds ── */
+  /* ── Фон ── */
   --bg:   #050816;
-  --bg-s: #080d1f;
+  --bg-s: #0B1023;
   --bg-p: #0B1023;
   --bg-w: #121933;
 
-  /* ── Brand (sidebar, highlights) ── */
-  --br:   #4DFFB4;
-  --br-d: #2bcc8a;
-  --br-l: #80ffcc;
-
-  /* ── Primary accent: Momentum Green ── */
+  /* ── Акцент первичный (зелёный) ── */
   --go:   #4DFFB4;
-  --go-l: #80ffcc;
-  --go-d: #2bcc8a;
+  --go-l: #7DFFD4;
+  --go-d: #2bdb95;
 
-  /* ── Secondary accent: Focus Purple ── */
-  --acc2:  #7C5CFF;
+  /* ── Акцент вторичный (фиолетовый) ── */
+  --acc2:   #7C5CFF;
   --acc2-l: #9E8CFF;
   --acc2-d: #5a3dcc;
 
-  /* ── Emotional accent: pink ── */
-  --acc3:  #FF5C9F;
+  /* ── Предупреждение ── */
+  --warn: #FFB84D;
 
-  /* ── Warning: amber ── */
-  --warn:  #FFB84D;
+  /* ── Поверхности ── */
+  --cr:   #0B1023;
+  --cr-d: #050816;
 
-  /* ── Surfaces (cards) ── */
-  --cr:   #0d1428;
-  --cr-d: #0a1020;
-
-  /* ── Semantic ── */
-  --red:  #FF6B6B;
+  /* ── Семантические ── */
+  --red:  #FF5C8F;
   --grn:  #4DFFB4;
   --blu:  #5CB8FF;
 
-  /* ── Text ── */
-  --tx:   #E2EAF4;
-  --tx-m: #8AAFC8;
-  --tx-l: #4D7A9E;
+  /* ── Текст ── */
+  --tx:   #EAEEF6;
+  --tx-m: #7C9CB8;
+  --tx-l: #4A6B8A;
 
-  /* ── Borders ── */
+  /* ── Рамки ── */
   --bd:   rgba(77,255,180,0.08);
-  --bd-s: rgba(77,255,180,0.18);
+  --bd-s: rgba(77,255,180,0.20);
 
-  /* ── Shadows ── */
-  --sh:   rgba(0,0,0,0.6);
+  /* ── Тень ── */
+  --sh:   rgba(0,0,0,0.65);
 
-  /* ── Glow ── */
-  --glow-go:   0 0 24px rgba(77,255,180,0.20);
-  --glow-acc2: 0 0 24px rgba(124,92,255,0.25);
-  --glow-soft: 0 8px 40px rgba(0,0,0,0.5);
+  /* ── Glow (динамически обновляются при смене темы) ── */
+  --glow-go:   0 0 24px rgba(77,255,180,0.22);
+  --glow-acc2: 0 0 24px rgba(124,92,255,0.28);
+  --glow-soft: 0 8px 40px rgba(0,0,0,0.55);
 
-  /* ── Radius ── */
+  /* ── Радиус ── */
   --r:   8px;
   --rl:  14px;
   --rxl: 20px;
   --rf:  999px;
 
-  /* ── Fonts ── */
+  /* ── Шрифты ── */
   --fd: 'Cinzel', serif;
   --fb: 'Raleway', sans-serif;
 
-  /* ── Motion ── */
+  /* ── Анимация ── */
   --tt: 200ms ease;
 
-  /* ── Layout ── */
+  /* ── Сетка ── */
   --sb: 420px;
   --tb: 54px;
 
-  /* ── Typography scale ── */
+  /* ── Шкала шрифтов ── */
   --fs-2xs: 10px;
   --fs-xs:  12px;
   --fs-s:   13px;
@@ -92,21 +85,121 @@
 }
 
 /* ═══════════════════════════════════════
-   LIGHT THEME override (legacy support)
+   ТЕМЫ — полное переопределение по дизайн-системе
+   Каждая тема меняет ВСЕ переменные
+   JS applyPalette() устанавливает data-palette на :root
    ═══════════════════════════════════════ */
-[data-theme="light"] {
-  --bg:   #EDE3CC; --bg-s: #E4D8BB; --bg-p: #F5EDD8; --bg-w: #FDFAF4;
-  --br:   #7B4F1E; --br-d: #5A3510; --br-l: #A06A2E;
-  --go:   #C8963E; --go-l: #E4B96A; --go-d: #9A6F28;
-  --acc2: #6B5CE7; --acc2-l: #9E8CFF; --acc2-d: #4a3db8;
-  --acc3: #E84393;
-  --warn: #E8924A;
-  --cr:   #F5EDD8; --cr-d: #EAE0C4;
-  --red:  #C04030; --grn: #4A8A4A; --blu: #3A6EA8;
-  --tx:   #3A2810; --tx-m: #7B5A30; --tx-l: #A08050;
-  --bd:   rgba(123,79,30,.18); --bd-s: rgba(123,79,30,.42);
-  --sh:   rgba(80,40,10,.10);
-  --glow-go:   none; --glow-acc2: none; --glow-soft: 0 4px 16px rgba(80,40,10,.12);
+
+/* ── Life OS (дефолт, уже в :root) ── */
+[data-palette="life-os"] {
+  --bg:#050816;  --bg-s:#0B1023;  --bg-p:#0B1023;  --bg-w:#121933;
+  --go:#4DFFB4;  --go-l:#7DFFD4;  --go-d:#2bdb95;
+  --acc2:#7C5CFF; --acc2-l:#9E8CFF; --acc2-d:#5a3dcc;
+  --warn:#FFB84D;
+  --cr:#0B1023;  --cr-d:#050816;
+  --red:#FF5C8F; --grn:#4DFFB4;  --blu:#5CB8FF;
+  --tx:#EAEEF6;  --tx-m:#7C9CB8; --tx-l:#4A6B8A;
+  --bd:rgba(77,255,180,0.08); --bd-s:rgba(77,255,180,0.20);
+  --sh:rgba(0,0,0,0.65);
+  --glow-go:0 0 24px rgba(77,255,180,0.22);
+  --glow-acc2:0 0 24px rgba(124,92,255,0.28);
+  --glow-soft:0 8px 40px rgba(0,0,0,0.55);
+}
+
+/* ── Светлая ── */
+[data-palette="light"] {
+  --bg:#F7F7FB;  --bg-s:#EEEEF6;  --bg-p:#FFFFFF;  --bg-w:#FFFFFF;
+  --go:#407CFF;  --go-l:#60A5FA;  --go-d:#2563EB;
+  --acc2:#7C5CFF; --acc2-l:#9E8CFF; --acc2-d:#5a3dcc;
+  --warn:#F59E0B;
+  --cr:#F0F2FA;  --cr-d:#E3E8F2;
+  --red:#FF5C8F; --grn:#22C55E;  --blu:#407CFF;
+  --tx:#0F172A;  --tx-m:#475569; --tx-l:#94A3B8;
+  --bd:rgba(64,124,255,0.12); --bd-s:rgba(64,124,255,0.28);
+  --sh:rgba(15,23,42,0.08);
+  --glow-go:0 2px 12px rgba(64,124,255,0.18);
+  --glow-acc2:0 2px 12px rgba(124,92,255,0.18);
+  --glow-soft:0 4px 20px rgba(15,23,42,0.10);
+}
+
+/* ── Тёмная ── */
+[data-palette="dark"] {
+  --bg:#0A0E1A;  --bg-s:#131827;  --bg-p:#131827;  --bg-w:#1E2436;
+  --go:#4D7CFF;  --go-l:#7EA8FF;  --go-d:#2563EB;
+  --acc2:#7C5CFF; --acc2-l:#9E8CFF; --acc2-d:#5a3dcc;
+  --warn:#FFB84D;
+  --cr:#131827;  --cr-d:#0A0E1A;
+  --red:#FF5C8F; --grn:#4DFFB4;  --blu:#4D7CFF;
+  --tx:#E8EAF0;  --tx-m:#8892A4; --tx-l:#4A5568;
+  --bd:rgba(77,124,255,0.12); --bd-s:rgba(77,124,255,0.28);
+  --sh:rgba(0,0,0,0.60);
+  --glow-go:0 0 20px rgba(77,124,255,0.22);
+  --glow-acc2:0 0 20px rgba(124,92,255,0.28);
+  --glow-soft:0 8px 40px rgba(0,0,0,0.50);
+}
+
+/* ── Лесная ── */
+[data-palette="forest"] {
+  --bg:#081408;  --bg-s:#112B11;  --bg-p:#112B11;  --bg-w:#1A3A28;
+  --go:#62F198;  --go-l:#89F7B0;  --go-d:#3DD672;
+  --acc2:#4DB6AC; --acc2-l:#80CBC4; --acc2-d:#26A69A;
+  --warn:#FFB74D;
+  --cr:#112B11;  --cr-d:#081408;
+  --red:#FF7043; --grn:#62F198;  --blu:#4DB6AC;
+  --tx:#E8F5E8;  --tx-m:#86B894; --tx-l:#4A7A54;
+  --bd:rgba(98,241,152,0.10); --bd-s:rgba(98,241,152,0.24);
+  --sh:rgba(0,10,4,0.60);
+  --glow-go:0 0 22px rgba(98,241,152,0.24);
+  --glow-acc2:0 0 22px rgba(77,182,172,0.28);
+  --glow-soft:0 8px 40px rgba(0,10,4,0.50);
+}
+
+/* ── Бриз ── */
+[data-palette="breeze"] {
+  --bg:#F0F2F7;  --bg-s:#E3E8F2;  --bg-p:#FFFFFF;  --bg-w:#FFFFFF;
+  --go:#4AC3F4;  --go-l:#7ED3F7;  --go-d:#0EA5E9;
+  --acc2:#7C5CFF; --acc2-l:#9E8CFF; --acc2-d:#5a3dcc;
+  --warn:#FFB840;
+  --cr:#EAF6FD;  --cr-d:#D6EFF9;
+  --red:#FF6B8E; --grn:#34D399;  --blu:#4AC3F4;
+  --tx:#0C1A2E;  --tx-m:#334E68; --tx-l:#627D98;
+  --bd:rgba(74,195,244,0.14); --bd-s:rgba(74,195,244,0.32);
+  --sh:rgba(12,26,46,0.08);
+  --glow-go:0 2px 14px rgba(74,195,244,0.20);
+  --glow-acc2:0 2px 14px rgba(124,92,255,0.18);
+  --glow-soft:0 4px 20px rgba(12,26,46,0.10);
+}
+
+/* ── Закат ── */
+[data-palette="sunset"] {
+  --bg:#1A0014;  --bg-s:#2E1020;  --bg-p:#2E1020;  --bg-w:#3E1F2E;
+  --go:#FF84B0;  --go-l:#FFB3CC;  --go-d:#FF6B8E;
+  --acc2:#FF6B8E; --acc2-l:#FF9AB3; --acc2-d:#E84370;
+  --warn:#FFD166;
+  --cr:#2E1020;  --cr-d:#1A0014;
+  --red:#FF6B8E; --grn:#7EF5B5;  --blu:#7EB5FF;
+  --tx:#FDE8F0;  --tx-m:#C9849C; --tx-l:#8A5068;
+  --bd:rgba(255,132,176,0.12); --bd-s:rgba(255,132,176,0.28);
+  --sh:rgba(80,0,40,0.65);
+  --glow-go:0 0 22px rgba(255,132,176,0.28);
+  --glow-acc2:0 0 22px rgba(255,107,142,0.28);
+  --glow-soft:0 8px 40px rgba(80,0,40,0.55);
+}
+
+/* ── Золото ── */
+[data-palette="gold"] {
+  --bg:#1A1408;  --bg-s:#261A00;  --bg-p:#261A00;  --bg-w:#322400;
+  --go:#FFD166;  --go-l:#FFE599;  --go-d:#FACD4B;
+  --acc2:#FACD4B; --acc2-l:#FFE07A; --acc2-d:#D4A830;
+  --warn:#FF7EF5;
+  --cr:#261A00;  --cr-d:#1A1408;
+  --red:#FF7EF5; --grn:#40CFFF;  --blu:#40CFFF;
+  --tx:#FFF8E8;  --tx-m:#C9A84C; --tx-l:#8A7030;
+  --bd:rgba(255,209,102,0.12); --bd-s:rgba(255,209,102,0.28);
+  --sh:rgba(0,0,0,0.70);
+  --glow-go:0 0 22px rgba(255,209,102,0.28);
+  --glow-acc2:0 0 22px rgba(250,205,75,0.28);
+  --glow-soft:0 8px 40px rgba(0,0,0,0.60);
 }
 
 /* ═══════════════════════════════════════
@@ -2971,7 +3064,8 @@ body {
    any theme is applied
    ═══════════════════════════════════════ */
 html, body {
-  background-color: #050816;
+  background-color: var(--bg);
+  color: var(--tx);
 }
 
 /* ═══════════════════════════════════════
@@ -4423,3 +4517,84 @@ html, body {
   padding:14px 20px !important; gap:12px !important;
   border-top:1px solid rgba(255,255,255,0.06) !important;
 }
+
+/* ═══════════════════════════════════════
+   ТЕМА-СПЕЦИФИЧНЫЕ ПЕРЕОПРЕДЕЛЕНИЯ
+   ═══════════════════════════════════════ */
+
+/* ── Светлые темы (Светлая, Бриз) — инвертируем где нужно ── */
+[data-palette="light"],
+[data-palette="breeze"] {
+  color-scheme: light;
+}
+[data-palette="light"] html,
+[data-palette="light"] body,
+[data-palette="breeze"] html,
+[data-palette="breeze"] body {
+  background-color: var(--bg);
+  color: var(--tx);
+}
+
+/* Sidebar для светлых тем */
+[data-palette="light"] .sidebar,
+[data-palette="breeze"] .sidebar {
+  background: var(--bg-w);
+  border-right-color: var(--bd-s);
+}
+
+/* Top nav для светлых тем */
+[data-palette="light"] .top-nav,
+[data-palette="breeze"] .top-nav {
+  background: var(--bg-p);
+  border-bottom: 1px solid var(--bd-s);
+}
+
+/* Cards для светлых тем */
+[data-palette="light"] .icard,
+[data-palette="breeze"] .icard {
+  background: var(--bg-w);
+  border-color: var(--bd-s);
+  box-shadow: 0 2px 8px var(--sh);
+}
+
+/* Bottom nav для светлых тем */
+[data-palette="light"] .bottom-nav,
+[data-palette="breeze"] .bottom-nav {
+  background: var(--bg-w);
+  border-top-color: var(--bd-s);
+}
+
+/* Modal для светлых тем */
+[data-palette="light"] .m-box,
+[data-palette="breeze"] .m-box {
+  background: var(--bg-p);
+  border-color: var(--bd-s);
+}
+
+/* Input для светлых тем */
+[data-palette="light"] .mf-input,
+[data-palette="light"] .mf-textarea,
+[data-palette="light"] .mf-select,
+[data-palette="breeze"] .mf-input,
+[data-palette="breeze"] .mf-textarea,
+[data-palette="breeze"] .mf-select {
+  background: var(--bg-w);
+  border-color: var(--bd-s);
+  color: var(--tx);
+}
+
+/* ── Все темы — гарантируем использование переменных ── */
+html, body {
+  background-color: var(--bg) !important;
+  color: var(--tx) !important;
+}
+
+.sidebar    { background: var(--bg-p); }
+.main-area  { background: var(--bg); }
+.mod        { background: var(--bg); }
+.mod-body   { background: var(--bg); }
+.top-nav    { background: var(--bg-p); }
+.icard      { background: var(--bg-w); border-color: var(--bd); }
+.m-box      { background: var(--bg-p); }
+.m-ov       { background: rgba(0,0,0,0.7); }
+.bottom-nav { background: var(--bg-p); border-top-color: var(--bd); }
