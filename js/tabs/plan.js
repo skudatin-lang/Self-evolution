@@ -230,23 +230,14 @@ async function renderPlanSidebar(tasks, goals, projects) {
   ).slice(0, 3);
 
   document.getElementById("sb-body").innerHTML = `
+    <!-- Сайдбар ДЕНЬ — только State Panel (аналогично другим вкладкам) -->
     <div class="sb-tiles-grid">
-      <button class="sb-tile on" onclick="">
-        <div class="sb-tile-ico">📋</div>
-        <div class="sb-tile-lbl">Задачи дня</div>
-        <div class="sb-tile-cnt">${todayCnt}</div>
-      </button>
-      <button class="sb-tile" onclick="">
-        <div class="sb-tile-ico">📅</div>
-        <div class="sb-tile-lbl">Месяц</div>
-        <div class="sb-tile-cnt">${monthlyCnt}</div>
-      </button>
-      <button class="sb-tile" onclick="window.switchTab('goals')">
+      <button class="sb-tile" onclick="window.switchTab('goals')" style="cursor:pointer">
         <div class="sb-tile-ico">🎯</div>
         <div class="sb-tile-lbl">Цели</div>
         <div class="sb-tile-cnt">${goals.filter(g=>!g.done).length}</div>
       </button>
-      <button class="sb-tile" onclick="window.switchTab('goals')">
+      <button class="sb-tile" onclick="window.switchTab('goals')" style="cursor:pointer">
         <div class="sb-tile-ico">📁</div>
         <div class="sb-tile-lbl">Проекты</div>
         <div class="sb-tile-cnt">${projects.filter(p=>!p.done).length}</div>
@@ -267,13 +258,9 @@ async function renderPlanSidebar(tasks, goals, projects) {
       }
     </div>
 
-    <!-- AI Plan -->
-    <button class="aip-open-btn" onclick="window.openAiPlan()">
-      ✨ Утренний план от AI
-    </button>
-
+    <!-- AI перемещён в основной контент экрана ДЕНЬ (под чек-ин) -->
     <!-- Strategic AI -->
-    <div class="ai-panel">
+    <div class="ai-panel" style="display:none">
       <div class="ai-panel-hd">
         <span class="ai-panel-ico">✨</span>
         <span class="ai-panel-ttl">Стратегический ИИ</span>
@@ -440,6 +427,9 @@ async function renderPlanMain(tasks, goals, projects) {
                     "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
     const monthLabel = `${months[planDate.getMonth()]} ${planDate.getFullYear()}`;
 
+    // Сохраняем выбранную дату глобально для обработчиков toggleTask
+    window._planTargetDate = targetStr;
+
     body.innerHTML = `
 
       <!-- Дата-заголовок -->
@@ -450,6 +440,23 @@ async function renderPlanMain(tasks, goals, projects) {
 
       <!-- Утренний чек-ин (только сегодня) -->
       ${isToday ? renderMorningCheckin(todayAudit) : ""}
+
+      <!-- AI-блок в основном контенте (только для сегодня) -->
+      ${isToday ? `
+        <div class="plan-ai-strip">
+          <button class="plan-ai-btn primary" onclick="window.openAiPlan && window.openAiPlan()">
+            <span class="plan-ai-ico">✨</span>
+            <span>Утренний план от AI</span>
+          </button>
+          <button class="plan-ai-btn secondary" onclick="window._planAiAnalysis && window._planAiAnalysis()">
+            <span class="plan-ai-ico">🔍</span>
+            <span>Стратегический анализ</span>
+          </button>
+          <button class="plan-ai-btn secondary" onclick="window._openBankDialog && window._openBankDialog()">
+            <span class="plan-ai-ico">⚡</span>
+            <span>Банк действий</span>
+          </button>
+        </div>` : ""}
 
       <!-- Блок: Главные задачи -->
       <div class="plan-main-tasks">
@@ -560,7 +567,7 @@ function renderMainTaskCard(t, goals) {
   return `
     <div class="plan-main-task-card" onclick="window.editTask('${t.id}')">
       <div class="plan-mtc-check ${isDone ? "done" : ""}"
-        onclick="event.stopPropagation();window.toggleTask('${t.id}')">
+        onclick="event.stopPropagation();window._toggleTaskOnDate('${t.id}',_planTargetDate)">
         ${isDone ? "✓" : ""}
       </div>
       <div class="plan-mtc-body">
@@ -592,13 +599,51 @@ function renderTaskRow(t, isDone) {
   return `
     <div class="plan-task-row" onclick="window.editTask('${t.id}')">
       <div class="plan-tr-check ${checkClass}"
-        onclick="event.stopPropagation();window.toggleTask('${t.id}')">
+        onclick="event.stopPropagation();window._toggleTaskOnDate('${t.id}',_planTargetDate)">
         ${checkContent}
       </div>
       <span class="plan-tr-title ${isDone ? "done" : ""}">${esc(t.title)}</span>
       ${mins ? `<span class="plan-tr-time">${mins} мин</span>` : ""}
     </div>`;
 }
+
+// ── Переключение задачи с учётом ВЫБРАННОГО дня ──
+// Ключевое отличие от window.toggleTask: completedDate = selectedDate, не today
+window._toggleTaskOnDate = async (id, selectedDate) => {
+  const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const { db, getUid, getTasks, dstr: dstr2 } = await import("../db.js");
+  const all = await getTasks();
+  const t   = all.find(x => x.id === id);
+  if (!t) return;
+
+  const today2   = dstr2(new Date());
+  const useDate  = selectedDate || today2; // дата выбранного дня
+  const isRecurring = t.recurrence && t.recurrence.type !== "none";
+
+  if (isRecurring) {
+    // Повторяющиеся: выполнена/не выполнена для конкретного дня
+    const doneOnDate = t.done && t.completedDate === useDate;
+    if (doneOnDate) {
+      await updateDoc(doc(db, "users", getUid(), "tasks", id), {
+        done: false, completedDate: null
+      });
+    } else {
+      await updateDoc(doc(db, "users", getUid(), "tasks", id), {
+        done: true, completedDate: useDate
+      });
+    }
+  } else {
+    // Обычные задачи
+    const nowDone = !t.done;
+    await updateDoc(doc(db, "users", getUid(), "tasks", id), {
+      done: nowDone,
+      completedDate: nowDone ? useDate : null
+    });
+  }
+
+  // Перерисовываем план для выбранной даты
+  await renderPlan();
+};
 
 window._toggleMain = async (id) => {
   const { getTasks } = await import("../db.js");
