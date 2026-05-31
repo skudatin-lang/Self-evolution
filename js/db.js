@@ -213,17 +213,12 @@ export const addTask = async data => {
     note: data.note || "",
     goalId: data.goalId || null,
     projId: data.projId || null,
-    // ── НОВОЕ: мотив задачи (duty = надо, want = хочу) ──
-    motive: data.motive || "duty",
     priority: data.priority || "med",
     subtasks: data.subtasks || [],
     date: data.date || today(),
     deadline: toTS(data.deadline),
     startDate: toTS(data.startDate),
     done: false,
-    // ── статус и история задачи ──
-    status: "open",    // open | postponed | cancelled
-    history: [],       // массив событий изменений
     createdAt: ss(),
     reminder: data.reminder ? toTS(data.reminder) : null,
     attachments: data.attachments || [],
@@ -272,28 +267,30 @@ export const deleteTask = async id => {
   await batch.commit();
 };
 
-export const toggleTask = async id => {
+export const toggleTask = async (id, targetDate) => {
   const all = await getTasks();
   const t = all.find(x => x.id === id);
   if (!t) return;
 
   const isRecurring = t.recurrence && t.recurrence.type !== "none";
-  const today2 = dstr(new Date());
+  // Используем targetDate если передан (выбранный день в навигаторе)
+  // иначе сегодня — чтобы не помечать 30.05 как выполненной 31.05
+  const dateStr = targetDate || dstr(new Date());
 
   if (isRecurring) {
-    // Для повторяющихся задач: toggleTask работает только в рамках текущего дня
-    const doneToday = t.done && t.completedDate === today2;
-    if (doneToday) {
+    // Повторяющиеся: done привязан к конкретному дню
+    const doneOnDate = t.done && t.completedDate === dateStr;
+    if (doneOnDate) {
       await updateDoc(ud("tasks", id), { done: false, completedDate: null });
     } else {
-      await updateDoc(ud("tasks", id), { done: true, completedDate: today2, status: "open" });
+      await updateDoc(ud("tasks", id), { done: true, completedDate: dateStr });
     }
   } else {
-    // Обычные задачи — стандартная логика
+    // Обычные задачи
     const nowDone = !t.done;
     const update = { done: nowDone };
-    if (nowDone) { update.completedDate = today2; update.status = "open"; }
-    else { update.completedDate = null; }
+    if (nowDone) update.completedDate = dateStr;
+    else         update.completedDate = null;
     await updateDoc(ud("tasks", id), update);
   }
 };
@@ -303,90 +300,9 @@ export const saveEnergyScore = async (id, score) => {
   await updateDoc(ud("tasks", id), { energyScore: score, energyScoredAt: dstr(new Date()) });
 };
 
-// ════════════════════════════════════════
-//  ИСТОРИЯ ИЗМЕНЕНИЙ ЗАДАЧИ
-//  Каждое важное событие пишется в history[]
-//  Типы: postponed | cancelled | reopened | title_changed | goal_changed
-// ════════════════════════════════════════
-
-async function _appendHistory(id, event) {
-  const all = await getTasks();
-  const task = all.find(t => t.id === id);
-  if (!task) return;
-  const history = Array.isArray(task.history) ? [...task.history] : [];
-  history.push({ ...event, at: new Date().toISOString() });
-  await updateDoc(ud("tasks", id), { history });
-}
-
-// ── Перенос задачи ──
-// reason: "no_time" | "no_mood" | "irrelevant"
-export const postponeTask = async (id, newDate, reason = "no_time") => {
-  const all = await getTasks();
-  const task = all.find(t => t.id === id);
-  if (!task) return;
-  const history = Array.isArray(task.history) ? [...task.history] : [];
-  history.push({
-    event: "postponed",
-    from: task.date || null,
-    to: newDate,
-    reason,
-    at: new Date().toISOString(),
-  });
-  await updateDoc(ud("tasks", id), {
-    date: newDate,
-    status: "open",
-    history,
-  });
+export const saveMetric = async (id, field, value) => {
+  await updateDoc(ud("tasks", id), { [field]: value });
 };
-
-// ── Отмена задачи ──
-export const cancelTask = async (id, reason = "irrelevant") => {
-  const all = await getTasks();
-  const task = all.find(t => t.id === id);
-  if (!task) return;
-  const history = Array.isArray(task.history) ? [...task.history] : [];
-  history.push({
-    event: "cancelled",
-    reason,
-    at: new Date().toISOString(),
-  });
-  await updateDoc(ud("tasks", id), {
-    status: "cancelled",
-    history,
-  });
-};
-
-// ── Восстановление отменённой задачи ──
-export const reopenTask = async id => {
-  await _appendHistory(id, { event: "reopened" });
-  await updateDoc(ud("tasks", id), { status: "open" });
-};
-
-// ── Запись смены названия задачи ──
-export const recordTitleChange = async (id, oldTitle, newTitle) => {
-  if (!oldTitle || !newTitle || oldTitle.trim() === newTitle.trim()) return;
-  await _appendHistory(id, {
-    event: "title_changed",
-    from: oldTitle.trim(),
-    to: newTitle.trim(),
-  });
-};
-
-// ── Запись смены цели у задачи ──
-export const recordGoalChange = async (id, oldGoalId, newGoalId, goals) => {
-  if (oldGoalId === newGoalId) return;
-  const oldTitle = goals.find(g => g.id === oldGoalId)?.title || "—";
-  const newTitle = goals.find(g => g.id === newGoalId)?.title || "—";
-  await _appendHistory(id, {
-    event: "goal_changed",
-    from: oldTitle,
-    to: newTitle,
-  });
-};
-
-// ── Заглушки для обратной совместимости (actions-bank.js) ──
-export const saveMetric = async () => {};
-export const getDb = () => db;
 
 // ════════════════ GOALS, PROJECTS, IDEAS, DIARY, TEMPLATES ════════════════
 export const getGoals = () => sg(uc("goals"));
@@ -461,8 +377,6 @@ export const applyAiPlan = async (selectedTasks, goals, projects) => {
       deadline:   null,
       startDate:  null,
       done:       false,
-      status:     "open",
-      history:    [],
       fromAi:     true,
       aiVariant:  t.variant || "",
       createdAt:  ss(),
@@ -531,15 +445,10 @@ export const getStats = async () => {
   };
 };
 // ════════════════════════════════════════
-//  DAILY AUDIT — вечерний аудит дня
-//  Коллекция: users/{uid}/daily_audit
-//  Поля: date, energy, fatigue, mood,
-//        reflection, aiResponse, authorRatio
+//  DAILY AUDIT — ежедневный аудит
 // ════════════════════════════════════════
-
 export const getDailyAudits = () => sg(uc("daily_audit"));
 
-// Сохранить или обновить аудит за день (один документ на дату)
 export const saveDailyAudit = async data => {
   const dateStr = data.date || today();
   const all = await getDailyAudits();
@@ -555,116 +464,27 @@ export const saveDailyAudit = async data => {
 
 export const deleteDailyAudit = id => deleteDoc(ud("daily_audit", id));
 
-// Получить аудит за конкретный день
 export const getAuditForDate = async (dateStr) => {
   const all = await getDailyAudits();
   return all.find(a => a.date === (dateStr || today())) || null;
 };
 
-// Коэффициент авторства: % задач с motive="want" среди выполненных за день
 export const calcAuthorRatio = async (dateStr) => {
   const tasks = await getTasks();
   const td = dateStr || today();
-  const doneTodayTasks = tasks.filter(t => t.done && t.completedDate === td);
-  if (!doneTodayTasks.length) return null;
-  const wantCount = doneTodayTasks.filter(t => t.motive === "want").length;
-  return Math.round((wantCount / doneTodayTasks.length) * 100);
+  const doneTasks = tasks.filter(t => t.done && t.completedDate === td);
+  if (!doneTasks.length) return null;
+  const wantCount = doneTasks.filter(t => t.motiv === "хочу" || t.motive === "want").length;
+  return Math.round((wantCount / doneTasks.length) * 100);
 };
 
-// ════════════ ФОКУСНАЯ ЦЕЛЬ НЕДЕЛИ ════════════
-// Хранится в коллекции users/{uid}/focus_goal — один документ
-export const getFocusGoal = async () => {
-  const arr = await sg(uc("focus_goal"));
-  return arr[0] || null; // { goalId, setAt }
-};
-
-export const saveFocusGoal = async (goalId) => {
-  const arr = await sg(uc("focus_goal"));
-  const data = { goalId, setAt: today() };
-  if (arr.length) await updateDoc(ud("focus_goal", arr[0].id), data);
-  else await addDoc(uc("focus_goal"), { ...data, createdAt: ss() });
-};
-
-// ════════════ РАСШИРЕННАЯ СТАТИСТИКА ДЛЯ ДАШБОРДА ════════════
-export const getDashStats = async () => {
-  const [tasks, goals, ideas, diary] = await Promise.all([
-    getTasks(), getGoals(), getIdeas(), getDiary()
-  ]);
-  const td  = today();
-  const tgt = new Date(td + "T00:00:00");
-
-  // Задачи сегодня — учитываем старые задачи без поля status
-  const todayAll = tasks.filter(t => t.date === td);
-
-  // Выполнено сегодня = done:true (независимо от completedDate — задача была на сегодня)
-  const todayDone = todayAll.filter(t => t.done).length;
-
-  // Перенесено = status:"postponed"
-  const todayPostponed = todayAll.filter(t => t.status === "postponed").length;
-
-  // Отменено = status:"cancelled"
-  const todayCancelled = todayAll.filter(t => t.status === "cancelled").length;
-
-  // Открыто = не выполнено И не отменено (старые задачи без status тоже открыты)
-  const todayOpen = todayAll.filter(t =>
-    !t.done && t.status !== "cancelled" && t.status !== "postponed"
-  ).length;
-
-  // Прогресс по целям
-  const goalProgress = goals.map(g => {
-    const gTasks     = tasks.filter(t => t.goalId === g.id);
-    const gDone      = gTasks.filter(t => t.done).length;
-    const gPostponed = gTasks.reduce((acc, t) => {
-      const h = Array.isArray(t.history) ? t.history : [];
-      return acc + h.filter(e => e.event === "postponed").length;
-    }, 0);
-    return { ...g, taskTotal: gTasks.length, taskDone: gDone, taskPostponed: gPostponed };
-  });
-
-  // Идеи
-  const ideasTotal    = ideas.length;
-  const ideasInPlan   = ideas.filter(i => i.status === "planned").length;
-  const ideasDone     = ideas.filter(i => i.status === "done").length;
-  const sevenDaysAgo  = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const ideasUnseen   = ideas.filter(i => {
-    if (i.status && i.status !== "new") return false;
-    const d = i.date ? new Date(i.date + "T00:00:00") : null;
-    return d && d < sevenDaysAgo;
-  }).length;
-
-  // Дневник
-  const diaryTotal = diary.length;
-  const diaryLast  = diary.length
-    ? diary.slice().sort((a,b) => (b.date||"") > (a.date||"") ? 1 : -1)[0]
-    : null;
-
-  // Настроение за последние 5 дней
-  const moodDays = [];
-  for (let i = 4; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = dstr(d);
-    const entry = diary.filter(e => e.date === ds && e.mood).slice(-1)[0];
-    moodDays.push(entry?.mood || null);
-  }
-
-  return {
-    tasks, goals: goalProgress, ideas, diary,
-    todayOpen, todayDone, todayPostponed, todayCancelled,
-    ideasTotal, ideasInPlan, ideasDone, ideasUnseen,
-    diaryTotal, diaryLast, moodDays,
-  };
-};
-
-// Алерты: важные задачи не выполнены 2+ дней
 export const getOverdueAlerts = async () => {
   const tasks = await getTasks();
-  const today2 = new Date(); today2.setHours(0, 0, 0, 0);
+  const today2 = new Date(); today2.setHours(0,0,0,0);
   return tasks.filter(t => {
     if (t.done || t.displaced || t.priority !== "high") return false;
-    if (t.status === "cancelled") return false;
     if (!t.date) return false;
     const taskDate = new Date(t.date + "T00:00:00");
-    const diffDays = Math.floor((today2 - taskDate) / 86400000);
-    return diffDays >= 2;
+    return Math.floor((today2 - taskDate) / 86400000) >= 2;
   });
 };
