@@ -299,39 +299,122 @@ export const toggleTask = async (id, targetDate) => {
 // Вызывается при загрузке приложения (app.js)
 // Обычная задача: date < today, done=false → status="failed", failedDate=yesterday
 export const markFailedTasks = async () => {
-  const all = await getTasks();
+  const all    = await getTasks();
   const today2 = dstr(new Date());
-  // Вчера — конец прошлого дня
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-  const yStr = dstr(yesterday);
 
-  const toFail = all.filter(t => {
-    if (t.done || t.status === "failed" || t.displaced) return false;
-    // Повторяющиеся задачи не помечаем как провалено
-    if (t.recurrence && t.recurrence.type !== "none") return false;
-    // Задача запланирована на прошлый день (не сегодня и не будущее)
-    if (!t.date) return false;
-    return t.date < today2;
-  });
+  // helper: dstr для Date объекта
+  const ds = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  };
 
-  if (!toFail.length) return 0;
+  // helper: соответствует ли повторяющаяся задача дате (копия recurMatchesDate из plan.js)
+  const recurMatches = (t, target) => {
+    const r = t.recurrence;
+    if (!r || r.type === "none") return false;
+    const start = t.startDate?.toDate?.() ?? (t.date ? new Date(t.date + "T00:00:00") : null);
+    if (!start || start > target) return false;
+    const until = r.until ? new Date(r.until + "T00:00:00") : null;
+    if (until && target > until) return false;
+    const dow = target.getDay(), dom = target.getDate();
+    const diff = Math.round((target - start) / 86400000);
+    switch (r.type) {
+      case "daily":   return diff >= 0;
+      case "weekly":
+        if (r.weekdays?.length) return r.weekdays.includes(dow);
+        return diff % (7 * (r.interval || 1)) === 0;
+      case "monthly":
+        if (r.monthdays?.length) return r.monthdays.includes(dom);
+        return dom === start.getDate();
+      case "yearly":
+        return dom === start.getDate() && target.getMonth() === start.getMonth();
+      default: return false;
+    }
+  };
 
-  const { writeBatch } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const updates = []; // { id, failedDate }
+
+  // ── Обычные задачи: date < today, не выполнены ──
+  for (const t of all) {
+    if (t.done || t.status === "failed" || t.displaced) continue;
+    if (t.recurrence && t.recurrence.type !== "none") continue;
+    if (!t.date) continue;
+    if (t.date < today2) {
+      updates.push({ id: t.id, failedDate: t.date });
+    }
+  }
+
+  // ── Повторяющиеся задачи: для каждого прошлого дня (до 30 дней назад) ──
+  // Если задача должна была выполняться в день X но completedDate !== X → провалена в X
+  const recurring = all.filter(t =>
+    !t.displaced && t.recurrence && t.recurrence.type !== "none"
+  );
+
+  if (recurring.length > 0) {
+    // Список уже помеченных failedDate для этих задач
+    const alreadyFailed = new Set(
+      all.filter(t => t.status === "failed" && t.failedDate)
+         .map(t => t.id + "|" + t.failedDate)
+    );
+
+    // Проверяем последние 30 дней (кроме сегодня)
+    const CHECK_DAYS = 30;
+    for (const t of recurring) {
+      for (let i = 1; i <= CHECK_DAYS; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        d.setHours(0,0,0,0);
+        const dayStr = ds(d);
+
+        // Задача должна была быть в этот день?
+        if (!recurMatches(t, d)) continue;
+
+        // Уже помечена как провалено в этот день?
+        if (alreadyFailed.has(t.id + "|" + dayStr)) continue;
+
+        // Была выполнена в этот день?
+        if (t.done && t.completedDate === dayStr) continue;
+
+        // Не выполнена и не помечена → провалена
+        updates.push({ id: t.id + "_recur_" + dayStr, recurId: t.id, failedDate: dayStr });
+      }
+    }
+  }
+
+  if (!updates.length) return 0;
+
+  const { writeBatch: wb } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
   const { db: dbInst } = await import("./firebase.js");
-  const batch = writeBatch(dbInst);
-  const uid = getUid();
+  const batch = wb(dbInst);
 
-  for (const t of toFail) {
-    const ref = ud("tasks", t.id);
+  // Обычные задачи — обновляем статус
+  for (const u of updates.filter(u => !u.recurId)) {
+    const ref = ud("tasks", u.id);
     batch.update(ref, {
       status:     "failed",
-      failedDate: t.date, // дата когда должна была быть выполнена
+      failedDate: u.failedDate,
       done:       false,
     });
   }
 
+  // Повторяющиеся задачи — записываем факт провала в поле failedDates (массив)
+  // Используем отдельный подход — храним failedDates: ["2026-05-30", ...]
+  const recurGroups = {};
+  for (const u of updates.filter(u => !!u.recurId)) {
+    if (!recurGroups[u.recurId]) recurGroups[u.recurId] = [];
+    recurGroups[u.recurId].push(u.failedDate);
+  }
+
+  const { arrayUnion } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  for (const [taskId, dates] of Object.entries(recurGroups)) {
+    const ref = ud("tasks", taskId);
+    batch.update(ref, { failedDates: arrayUnion(...dates) });
+  }
+
   await batch.commit();
-  return toFail.length;
+  return updates.length;
 };
 
 // ── Сохранение оценки энергии после задачи (1–5) ──
