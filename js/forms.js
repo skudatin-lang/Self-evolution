@@ -605,11 +605,22 @@ export async function editTaskModal(id) {
       <button class="m-tab-btn" data-pane="et-pane-extra">Дополнительно</button>
     </div>
 
+    <!-- ОСНОВНОЕ -->
     <div class="m-tab-pane on" id="et-pane-main">
+
+      <!-- Название + "Сделать главной" -->
       <div class="mf-group">
-        <label class="mf-label">Название задачи</label>
+        <div class="mf-title-row">
+          <label class="mf-label">Название задачи</label>
+          <label class="mf-main-toggle">
+            <input type="checkbox" id="et-is-main" ${t.isMain ? "checked" : ""}/>
+            <span class="mf-main-toggle-lbl">⭐ Главная задача дня</span>
+          </label>
+        </div>
         <input class="mf-input" id="et-ttl" value="${esc(t.title)}"/>
       </div>
+
+      <!-- Связь с целью + Почему важно -->
       <div class="mf-row">
         <div class="mf-group mf-group-half">
           <label class="mf-label">Связь с целью</label>
@@ -624,12 +635,16 @@ export async function editTaskModal(id) {
           <div class="mf-counter"><span id="et-why-cnt">${(t.why||'').length}</span>/200</div>
         </div>
       </div>
+
+      <!-- Метрики 1-10 (значения берутся из data-value атрибута при сохранении) -->
       <div class="mf-metrics-grid">
         ${metricSlider("et-importance",  "Важность",    "⭐", "#7C5CFF", t.importance  || 5)}
         ${metricSlider("et-urgency",     "Срочность",   "⏱",  "#FFB84D", t.urgency     || 5)}
         ${metricSlider("et-energy-cost", "Энергоёмкость","⚡","#4DFFB4", t.energyCost  || 5)}
         ${metricSlider("et-resistance",  "Сопротивление","🛡", "#FF6B6B", t.resistance  || 5)}
       </div>
+
+      <!-- Оценка времени + Приоритет -->
       <div class="mf-row">
         <div class="mf-group mf-group-half">
           <label class="mf-label">Оценка времени</label>
@@ -639,10 +654,16 @@ export async function editTaskModal(id) {
           </select>
         </div>
         <div class="mf-group mf-group-half">
-          <label class="mf-label">Дедлайн</label>
-          <div id="et-dl-field"></div>
+          <label class="mf-label">Приоритет</label>
+          <select class="mf-select" id="et-pri">
+            <option value="high" ${t.priority==="high"?"selected":""}>🔴 Высокий</option>
+            <option value="med"  ${(!t.priority||t.priority==="med")?"selected":""}>🟡 Средний</option>
+            <option value="low"  ${t.priority==="low"?"selected":""}>🟢 Низкий</option>
+          </select>
         </div>
       </div>
+
+      <!-- Подзадачи -->
       <div class="mf-group">
         <label class="mf-label">Подзадачи</label>
         <div id="sub-list" class="mf-subtasks-list">
@@ -652,43 +673,45 @@ export async function editTaskModal(id) {
       </div>
     </div>
 
+    <!-- ДОПОЛНИТЕЛЬНО -->
     <div class="m-tab-pane" id="et-pane-extra">
+
       <div class="mf-group">
         <label class="mf-label">Примечание</label>
         <textarea class="mf-textarea" id="et-note">${esc(t.note||'')}</textarea>
       </div>
+
+      <!-- Строка 1: Начало / Дедлайн -->
       <div class="mf-row">
         <div class="mf-group mf-group-half"><label class="mf-label">Начало</label><div id="et-start-field"></div></div>
+        <div class="mf-group mf-group-half"><label class="mf-label">Дедлайн</label><div id="et-dl-field"></div></div>
+      </div>
+
+      <!-- Строка 2: Повторять до / Напоминание -->
+      <div class="mf-row">
+        <div class="mf-group mf-group-half">
+          <label class="mf-label">Повторение</label>
+          <div class="mf-recur-btns" id="et-recur-types">
+            <button type="button" class="mf-recur-btn ${recurrence.type==="none"||!recurrence.type?"on":""}" data-val="none" onclick="window._setRecurType(this,'et')">Нет</button>
+            <button type="button" class="mf-recur-btn ${recurrence.type==="daily"?"on":""}" data-val="daily" onclick="window._setRecurType(this,'et')">Ежедневно</button>
+            <button type="button" class="mf-recur-btn ${recurrence.type==="weekly"?"on":""}" data-val="weekly" onclick="window._setRecurType(this,'et')">Еженедельно</button>
+            <button type="button" class="mf-recur-btn ${recurrence.type==="monthly"?"on":""}" data-val="monthly" onclick="window._setRecurType(this,'et')">Ежемесячно</button>
+          </div>
+          <input type="hidden" id="et-recurrence-type" value="${recurrence.type||'none'}"/>
+          <div id="et-recur-weekdays" class="recur-weekdays" style="display:${recurrence.type==="weekly"?"flex":"none"}">
+            ${[1,2,3,4,5,6,0].map((d,i)=>{const lbl=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][i];return `<button type="button" class="recur-wd-btn ${(recurrence.weekdays||[]).includes(d)?"on":""}" data-day="${d}" onclick="window._toggleWd(this)">${lbl}</button>`}).join("")}
+          </div>
+          <div id="et-recur-monthdays" class="recur-monthdays" style="display:${recurrence.type==="monthly"?"block":"none"}">
+            <div class="recur-md-lbl">Числа:</div>
+            <div class="recur-md-grid">${Array.from({length:31},(_,i)=>i+1).map(d=>`<button type="button" class="recur-md-btn ${(recurrence.monthdays||[]).includes(d)?"on":""}" data-day="${d}" onclick="window._toggleMd(this)">${d}</button>`).join("")}</div>
+          </div>
+          <div id="et-recur-until-row" style="display:${recurrence.type&&recurrence.type!=="none"?"block":"none"}">
+            <div class="mf-group" style="margin-top:8px"><label class="mf-label">Повторять до</label><div id="et-until-field"></div></div>
+          </div>
+        </div>
         <div class="mf-group mf-group-half"><label class="mf-label">Напоминание</label><div id="et-reminder-field"></div></div>
       </div>
-      <div class="mf-group">
-        <label class="mf-label">Повторение</label>
-        <div class="mf-recur-btns" id="et-recur-types">
-          <button type="button" class="mf-recur-btn ${recurrence.type==="none"||!recurrence.type?"on":""}" data-val="none" onclick="window._setRecurType(this,'et')">Нет</button>
-          <button type="button" class="mf-recur-btn ${recurrence.type==="daily"?"on":""}" data-val="daily" onclick="window._setRecurType(this,'et')">Ежедневно</button>
-          <button type="button" class="mf-recur-btn ${recurrence.type==="weekly"?"on":""}" data-val="weekly" onclick="window._setRecurType(this,'et')">Еженедельно</button>
-          <button type="button" class="mf-recur-btn ${recurrence.type==="monthly"?"on":""}" data-val="monthly" onclick="window._setRecurType(this,'et')">Ежемесячно</button>
-        </div>
-        <input type="hidden" id="et-recurrence-type" value="${recurrence.type||'none'}"/>
-        <div id="et-recur-weekdays" class="recur-weekdays" style="display:${recurrence.type==="weekly"?"flex":"none"}">
-          ${[1,2,3,4,5,6,0].map((d,i)=>{const lbl=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][i];return `<button type="button" class="recur-wd-btn ${(recurrence.weekdays||[]).includes(d)?"on":""}" data-day="${d}" onclick="window._toggleWd(this)">${lbl}</button>`}).join("")}
-        </div>
-        <div id="et-recur-monthdays" class="recur-monthdays" style="display:${recurrence.type==="monthly"?"block":"none"}">
-          <div class="recur-md-lbl">Числа:</div>
-          <div class="recur-md-grid">${Array.from({length:31},(_,i)=>i+1).map(d=>`<button type="button" class="recur-md-btn ${(recurrence.monthdays||[]).includes(d)?"on":""}" data-day="${d}" onclick="window._toggleMd(this)">${d}</button>`).join("")}</div>
-        </div>
-        <div id="et-recur-until-row" style="display:${recurrence.type&&recurrence.type!=="none"?"block":"none"}">
-          <div class="mf-group" style="margin-top:8px"><label class="mf-label">Повторять до</label><div id="et-until-field"></div></div>
-        </div>
-      </div>
-      <div class="mf-group">
-        <label class="mf-label">Приоритет</label>
-        <select class="mf-select" id="et-pri">
-          <option value="high" ${t.priority==="high"?"selected":""}>🔴 Высокий</option>
-          <option value="med"  ${(!t.priority||t.priority==="med")?"selected":""}>🟡 Средний</option>
-          <option value="low"  ${t.priority==="low"?"selected":""}>🟢 Низкий</option>
-        </select>
-      </div>
+
       <button class="mf-delete-btn" onclick="window._delTask('${id}')">🗑 Удалить задачу</button>
     </div>`;
 
@@ -700,21 +723,24 @@ export async function editTaskModal(id) {
     const startRaw  = dtpVal("et-st"); const dlRaw = dtpVal("et-dl");
     const newSubs   = [...($("sub-list")?.querySelectorAll(".mf-subtask-row input")||[])].map(i=>i.value.trim()).filter(Boolean);
     try {
+      // Читаем ползунки через value атрибут range input (надёжнее чем textContent)
+      const getSlider = id => parseInt(document.getElementById(id)?.value) || 5;
       await updateTask(id, {
         title:      $("et-ttl")?.value.trim() || t.title,
         note:       $("et-note")?.value.trim() || '',
         why:        $("et-why")?.value.trim() || '',
         goalId, projId,
         priority:   $("et-pri")?.value || "med",
+        isMain:     $("et-is-main")?.checked || false,
         deadline:   dlRaw || null, startDate: startRaw || null,
         date:       startRaw ? startRaw.slice(0,10) : today(),
         reminder:   dtpVal("et-reminder") || null,
         subtasks:   newSubs,
         duration:   parseInt($("et-duration")?.value) || null,
-        importance: parseInt($("et-importance")?.value) || 5,
-        urgency:    parseInt($("et-urgency")?.value) || 5,
-        energyCost: parseInt($("et-energy-cost")?.value) || 5,
-        resistance: parseInt($("et-resistance")?.value) || 5,
+        importance: getSlider("et-importance"),
+        urgency:    getSlider("et-urgency"),
+        energyCost: getSlider("et-energy-cost"),
+        resistance: getSlider("et-resistance"),
         recurrence: recType !== "none" ? {
           type: recType, interval: 1, until: untilVal,
           weekdays:  recType==="weekly"  ? [...document.querySelectorAll("#et-recur-weekdays .recur-wd-btn.on")].map(b=>parseInt(b.dataset.day)) : null,
