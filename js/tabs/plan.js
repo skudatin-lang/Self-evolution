@@ -304,6 +304,36 @@ function renderTaskRow(t, isDoneToday, targetStr) {
     </div>` : ""}`;
 }
 
+// ── Строка "провалено" ──
+function renderFailedTaskRow(t, targetStr) {
+  return `
+    <div class="plan-task-row failed-row" onclick="window.editTask('${t.id}')">
+      <button class="plan-tr-check failed"
+        data-tid="${t.id}" data-date="${targetStr}"
+        title="Провалено — нажмите чтобы восстановить"
+        onclick="event.stopPropagation();window._restoreFailedTask('${t.id}')">
+        ✗
+      </button>
+      <div class="plan-tr-body">
+        <div class="plan-tr-main">
+          <span class="plan-tr-title failed">${esc(t.title)}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Восстановить провалену задачу — снять статус failed
+window._restoreFailedTask = async (id) => {
+  try {
+    const { updateTask } = await import("../db.js");
+    await updateTask(id, { status: null, failedDate: null });
+    window._toast?.("Задача восстановлена");
+    await renderPlan();
+  } catch(e) {
+    console.error("restoreFailedTask:", e);
+  }
+};
+
 // Раскрыть/свернуть подзадачи
 window._toggleSubs = (subsId) => {
   const el  = document.getElementById(subsId);
@@ -339,25 +369,26 @@ async function renderPlanMain(tasks, goals, projects) {
     const isRecurring = t.recurrence && t.recurrence.type !== "none";
 
     if (isRecurring) {
-      // Повторяющаяся — показываем если этот день совпадает с расписанием
       return recurMatchesDate(t, tgt);
     }
 
     // Обычная задача — показываем если:
     // 1. запланирована на этот день
     if (t.date === targetStr) return true;
-    // 2. выполнена именно в этот день (чтобы видеть историю)
+    // 2. выполнена именно в этот день
     if (t.completedDate === targetStr) return true;
+    // 3. провалена именно в этот день (failedDate = этот день)
+    if (t.status === "failed" && t.failedDate === targetStr) return true;
 
     return false;
   });
 
-  // ── Разбивка: выполненные В ЭТОТ ДЕНЬ и остальные ──
-  // Ключевое правило:
-  //   doneOnTarget = done=true И completedDate === targetStr
-  //   openOnTarget = все остальные (включая done=true с другой датой выполнения)
-  const doneOnTarget = dayTasks.filter(t => t.done && t.completedDate === targetStr);
-  const openOnTarget = dayTasks.filter(t => !(t.done && t.completedDate === targetStr));
+  // ── Разбивка: открытые / выполненные / провалено за выбранный день ──
+  const doneTasks   = dayTasks.filter(t => t.done && t.completedDate === targetStr);
+  const failedTasks = dayTasks.filter(t => t.status === "failed" && t.failedDate === targetStr);
+  const openOnTarget = dayTasks.filter(t =>
+    !(t.done && t.completedDate === targetStr) && t.status !== "failed"
+  );
 
   // Главные задачи — только из открытых
   const mainTasks  = openOnTarget.filter(t => t.priority === "high" || t.isMain).slice(0, 3);
@@ -410,19 +441,30 @@ async function renderPlanMain(tasks, goals, projects) {
     <div class="plan-all-tasks">
       <div class="plan-all-tasks-title">
         Все задачи
-        ${doneOnTarget.length
+        ${doneTasks.length
           ? `<span style="margin-left:8px;font-size:11px;color:var(--go);font-family:var(--fd)">
-               ✓ ${doneOnTarget.length} выполнено
+               ✓ ${doneTasks.length} выполнено
+             </span>`
+          : ""}
+        ${failedTasks.length
+          ? `<span style="margin-left:6px;font-size:11px;color:var(--red);font-family:var(--fd)">
+               ✗ ${failedTasks.length} провалено
              </span>`
           : ""}
       </div>
-      ${otherTasks.length || doneOnTarget.length ? `
+      ${otherTasks.length || doneTasks.length ? `
         ${otherTasks.map(t => renderTaskRow(t, false, targetStr)).join("")}
-        ${doneOnTarget.length ? `
+        ${doneTasks.length ? `
           <div class="plan-section-label" style="margin:10px 0 4px;font-size:10px">
             ВЫПОЛНЕНО
           </div>
-          ${doneOnTarget.map(t => renderTaskRow(t, true, targetStr)).join("")}
+          ${doneTasks.map(t => renderTaskRow(t, true, targetStr)).join("")}
+        ` : ""}
+        ${failedTasks.length ? `
+          <div class="plan-section-label" style="margin:10px 0 4px;font-size:10px;color:var(--red)">
+            ПРОВАЛЕНО
+          </div>
+          ${failedTasks.map(t => renderFailedTaskRow(t, targetStr)).join("")}
         ` : ""}
       ` : `
         <div class="plan-empty">

@@ -45,50 +45,9 @@ function renderSidebar(selNode) {
   if (!sb) return;
 
   if (!selNode || selNode.type === "root") {
-    const goalCount    = mmFlat.filter(n => n.type === "goal").length;
-    const projectCount = mmFlat.filter(n => n.type === "project").length;
-    const taskCount    = mmFlat.filter(n => n.type === "task" && !n.done).length;
-    const doneCount    = mmFlat.filter(n => n.type === "task" && n.done).length;
-
-    sb.innerHTML = `
-      <div class="mm-sb-empty">
-        <div class="mm-sb-logo">🎯</div>
-        <div class="mm-sb-empty-title">Архитектура жизни</div>
-        <div class="mm-sb-empty-sub">Нажми цель или элемент карты</div>
-        <div class="mm-sb-stats">
-          <button class="mm-sb-stat mm-filter-btn ${mmViewMode==='goals'?'on':''}"
-            onclick="window._mmSetView('goals')">
-            <span class="mm-sb-stat-n">${goalCount}</span>
-            <span class="mm-sb-stat-l">Целей</span>
-          </button>
-          <button class="mm-sb-stat mm-filter-btn ${mmViewMode==='projects'?'on':''}"
-            onclick="window._mmSetView('projects')">
-            <span class="mm-sb-stat-n">${projectCount}</span>
-            <span class="mm-sb-stat-l">Проектов</span>
-          </button>
-          <button class="mm-sb-stat mm-filter-btn ${mmViewMode==='tasks'?'on':''}"
-            onclick="window._mmSetView('tasks')">
-            <span class="mm-sb-stat-n">${taskCount}</span>
-            <span class="mm-sb-stat-l">Задач</span>
-          </button>
-          <button class="mm-sb-stat mm-filter-btn done-btn ${mmViewMode==='done'?'on':''}"
-            onclick="window._mmSetView('done')">
-            <span class="mm-sb-stat-n">${doneCount}</span>
-            <span class="mm-sb-stat-l">Выполнено</span>
-          </button>
-        </div>
-        <div class="mm-sb-add-section">
-          <button class="mm-sb-add-btn" onclick="window.openNewModal('goal',null,null,'goals')">+ Цель</button>
-          <button class="mm-sb-add-btn" onclick="window.openNewModal('task',null,null,'goals')">+ Задача</button>
-          <button class="mm-sb-add-btn" onclick="window.openNewModal('project',null,null,'goals')">+ Проект</button>
-        </div>
-        <div class="mm-sb-toggle-row">
-          <span class="mm-sb-toggle-lbl">Показать выполненные</span>
-          <button class="fmt-toggle ${fmtShowDone?"on":""}" onclick="window._fmtShowDone()">
-            <span class="fmt-toggle-knob"></span>
-          </button>
-        </div>
-      </div>`;
+    // При открытии вкладки (нет выбранного узла) — сайдбар остаётся пустым
+    // как на всех остальных вкладках
+    sb.innerHTML = "";
     return;
   }
 

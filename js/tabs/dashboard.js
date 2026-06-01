@@ -405,11 +405,18 @@ export async function renderDashboard() {
   const fname = (document.getElementById("sb-un")?.textContent || "").split(" ")[0] || "";
   const greeting = fname ? `${gr}, ${esc(fname)}` : gr;
 
-  // Ключевая задача дня
-  const today2  = dstr(new Date());
-  const keyTask = (typeof getKeyTask === "function")
-    ? getKeyTask(stats.allOpen || [], today2)
-    : (stats.todayTasks || [])[0] || null;
+  // Ключевая задача дня — синхронизирована с блоком "Главные задачи" на вкладке ДЕНЬ
+  // Главная задача = isMain=true ИЛИ priority="high", запланирована на сегодня
+  const today2 = dstr(new Date());
+  const todayMainTasks = (stats.allOpen || []).filter(t => {
+    if (t.done) return false;
+    const isToday = t.date === today2 || t.completedDate === today2;
+    const isRecurring = t.recurrence && t.recurrence.type !== "none";
+    if (!isToday && !isRecurring) return false;
+    return t.isMain === true || t.priority === "high";
+  });
+  // Берём первую главную задачу (те же правила что в plan.js mainTasks)
+  const keyTask = todayMainTasks[0] || null;
   const keyGoal = keyTask?.goalId
     ? stats.goals.find(g => g.id === keyTask.goalId)?.title || ""
     : "";
