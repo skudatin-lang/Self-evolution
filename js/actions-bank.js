@@ -6,7 +6,8 @@
 //  Редактируется через вкладку «Банк» в форме задачи.
 // ════════════════════════════════════════
 
-import { getDb, getUid, ss } from "./db.js";
+import { getUid, ss } from "./db.js";
+import { db } from "./firebase.js";
 import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from
   "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -38,10 +39,10 @@ export const DEFAULT_BANK = [
 
 // ── CRUD ──
 function uc(name) {
-  return collection(getDb(), "users", getUid(), name);
+  return collection(db, "users", getUid(), name);
 }
 function ud(name, id) {
-  return doc(getDb(), "users", getUid(), name, id);
+  return doc(db, "users", getUid(), name, id);
 }
 
 export async function getBankActions() {

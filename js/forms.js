@@ -493,39 +493,7 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
 
     </div>`;
 
-  // Вставляем компоненты
-  setTimeout(() => {
-    renderLinkField("t-link-field", goals, projects, defGoalId, defProjId);
-    $("t-dl-field")?.replaceWith(makeDateField("t-dl", false, defaultDate || ""));
-    $("t-start-field")?.replaceWith(makeDateField("t-start", true));
-    $("t-reminder-field")?.replaceWith(makeDateField("t-reminder", true));
-    $("t-until-field")?.replaceWith(makeDateField("t-until", false));
-
-    // Счётчик символов
-    $("t-why")?.addEventListener("input", () => {
-      $("t-why-cnt").textContent = $("t-why").value.length;
-    });
-
-    setupModalTabs();
-
-    // Link picker — закрываем по клику вне
-    document.addEventListener("click", function closePicker(e) {
-      if (!e.target.closest(".link-picker-popup") && !e.target.closest(".link-field-empty") && !e.target.closest(".link-field-chevron")) {
-        document.getElementById("link-picker-popup")?.remove();
-        document.removeEventListener("click", closePicker);
-      }
-    });
-  }, 0);
-
-  // Кнопка "Создать задачу" уже в modal.js — переопределяем текст
-  setTimeout(() => {
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Создать задачу";
-    const cancelBtn = document.getElementById("m-cancel");
-    if (cancelBtn) cancelBtn.textContent = "Отмена";
-  }, 0);
-
-  // Передаём HTML сразу в openModal — так m-body не очищается
+  // Передаём HTML в openModal — он записывает в m-body синхронно
   const _taskHtml = $("m-body").innerHTML;
   openModal(title || "Новая задача", _taskHtml, async () => {
     const titleVal = $("t-title")?.value.trim();
@@ -566,6 +534,32 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
       window._refreshAll?.();
     } catch(e) { toast("⚠️ " + e.message); }
   });
+
+  // Вставляем компоненты ПОСЛЕ openModal (m-body уже содержит HTML)
+  renderLinkField("t-link-field", goals, projects, defGoalId, defProjId);
+  const dlFieldEl = $("t-dl-field");
+  if (dlFieldEl) dlFieldEl.replaceWith(makeDateField("t-dl", false, defaultDate || ""));
+  const startFieldEl = $("t-start-field");
+  if (startFieldEl) startFieldEl.replaceWith(makeDateField("t-start", true));
+  const remFieldEl = $("t-reminder-field");
+  if (remFieldEl) remFieldEl.replaceWith(makeDateField("t-reminder", true));
+  const untilFieldEl = $("t-until-field");
+  if (untilFieldEl) untilFieldEl.replaceWith(makeDateField("t-until", false));
+  $("t-why")?.addEventListener("input", () => {
+    const cnt = $("t-why-cnt"); if (cnt) cnt.textContent = $("t-why").value.length;
+  });
+  setupModalTabs();
+  const saveBtn = $("m-save"); if (saveBtn) saveBtn.textContent = "Создать задачу";
+  const cancelBtn = $("m-cancel"); if (cancelBtn) cancelBtn.textContent = "Отмена";
+  document.addEventListener("click", function closePicker(e) {
+    if (!e.target.closest(".link-picker-popup") &&
+        !e.target.closest(".link-field-empty") &&
+        !e.target.closest(".link-field-chevron")) {
+      document.getElementById("link-picker-popup")?.remove();
+      document.removeEventListener("click", closePicker);
+    }
+  });
+
 }
 
 window._addTaskSubtask = () => {
@@ -698,21 +692,6 @@ export async function editTaskModal(id) {
       <button class="mf-delete-btn" onclick="window._delTask('${id}')">🗑 Удалить задачу</button>
     </div>`;
 
-  setTimeout(() => {
-    renderLinkField("et-link-field", goals, projects, t.goalId, t.projId);
-    $("et-dl-field")?.replaceWith(makeDateField("et-dl", false, dlVal?.slice(0,10) || ""));
-    $("et-start-field")?.replaceWith(makeDateField("et-st", true, stVal));
-    $("et-reminder-field")?.replaceWith(makeDateField("et-reminder", true, remVal));
-    $("et-until-field")?.replaceWith(makeDateField("et-until", false, recurrence.until || ''));
-    $("et-why")?.addEventListener("input", () => { $("et-why-cnt").textContent = $("et-why").value.length; });
-    setupModalTabs();
-  }, 0);
-
-  setTimeout(() => {
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Сохранить";
-  }, 0);
-
   const _etHtml = $("m-body").innerHTML;
   openModal("Редактировать задачу", _etHtml, async () => {
     const { goalId, projId } = getLinkValue("et-link-field");
@@ -745,6 +724,17 @@ export async function editTaskModal(id) {
       toast("Сохранено ✓"); closeModal(); window._refreshAll?.();
     } catch(e) { toast("⚠️ " + e.message); }
   });
+
+  // Инициализация компонентов editTaskModal
+  renderLinkField("et-link-field", goals, projects, t.goalId, t.projId);
+  const etDlEl = $("et-dl-field"); if (etDlEl) etDlEl.replaceWith(makeDateField("et-dl", false, dlVal?.slice(0,10) || ""));
+  const etStEl = $("et-start-field"); if (etStEl) etStEl.replaceWith(makeDateField("et-st", true, stVal));
+  const etRemEl = $("et-reminder-field"); if (etRemEl) etRemEl.replaceWith(makeDateField("et-reminder", true, remVal));
+  const etUntilEl = $("et-until-field"); if (etUntilEl) etUntilEl.replaceWith(makeDateField("et-until", false, recurrence.until || ''));
+  $("et-why")?.addEventListener("input", () => { const c=$("et-why-cnt"); if(c) c.textContent=$("et-why").value.length; });
+  setupModalTabs();
+  const etSaveBtn = $("m-save"); if (etSaveBtn) etSaveBtn.textContent = "Сохранить";
+
 }
 
 // ════════════════════════════════════════
@@ -822,13 +812,7 @@ export async function buildGoalModal(title) {
       </div>
     </div>`;
 
-  setTimeout(() => {
-    $("g-dl-field")?.replaceWith(makeDateField("g-dl", false));
-    renderSpherePills("g-spheres", []);
-    $("g-desc")?.addEventListener("input", () => { $("g-desc-cnt").textContent = $("g-desc").value.length; });
-    $("g-why")?.addEventListener("input",  () => { $("g-why-cnt").textContent  = $("g-why").value.length; });
-    setupModalTabs();
-  }, 0);
+
 
   window._selectGoalLevel = (level) => {
     document.querySelectorAll(".mf-level-btn").forEach(b => b.classList.toggle("on", b.dataset.level === level));
@@ -841,11 +825,6 @@ export async function buildGoalModal(title) {
     row.innerHTML = `<input class="mf-input" placeholder="Ключевой результат"/><button type="button" class="mf-subtask-rm" onclick="this.closest('.mf-subtask-row').remove()">×</button>`;
     list.appendChild(row); row.querySelector("input")?.focus();
   };
-
-  setTimeout(() => {
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Создать цель";
-  }, 0);
 
   const _goalHtml = $("m-body").innerHTML;
   openModal(title || "Новая цель", _goalHtml, async () => {
@@ -863,6 +842,15 @@ export async function buildGoalModal(title) {
     });
     toast("Цель создана ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация buildGoalModal
+  const gDlEl = $("g-dl-field"); if (gDlEl) gDlEl.replaceWith(makeDateField("g-dl", false));
+  renderSpherePills("g-spheres", []);
+  $("g-desc")?.addEventListener("input", () => { const c=$("g-desc-cnt"); if(c) c.textContent=$("g-desc").value.length; });
+  $("g-why")?.addEventListener("input",  () => { const c=$("g-why-cnt");  if(c) c.textContent=$("g-why").value.length; });
+  setupModalTabs();
+  const gSaveBtn = $("m-save"); if (gSaveBtn) gSaveBtn.textContent = "Создать цель";
+
 }
 
 // ════════════════════════════════════════
@@ -945,12 +933,7 @@ export async function buildProjectModal(title, defGoalId = null) {
       </div>
     </div>`;
 
-  setTimeout(() => {
-    renderLinkField("p-link-field", activeGoals, [], defGoalId, null);
-    $("p-desc")?.addEventListener("input",   () => { $("p-desc-cnt").textContent   = $("p-desc").value.length; });
-    $("p-result")?.addEventListener("input", () => { $("p-result-cnt").textContent = $("p-result").value.length; });
-    setupModalTabs();
-  }, 0);
+
 
   window._addMilestone = () => {
     const list = $("p-milestones-list"); if (!list) return;
@@ -958,11 +941,6 @@ export async function buildProjectModal(title, defGoalId = null) {
     row.innerHTML = `<input class="mf-input" placeholder="Ключевая веха"/><button type="button" class="mf-subtask-rm" onclick="this.closest('.mf-subtask-row').remove()">×</button>`;
     list.appendChild(row); row.querySelector("input")?.focus();
   };
-
-  setTimeout(() => {
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Создать проект";
-  }, 0);
 
   const _projHtml = $("m-body").innerHTML;
   openModal(title || "Новый проект", _projHtml, async () => {
@@ -982,6 +960,14 @@ export async function buildProjectModal(title, defGoalId = null) {
     });
     toast("Проект создан ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация buildProjectModal
+  renderLinkField("p-link-field", activeGoals, [], defGoalId, null);
+  $("p-desc")?.addEventListener("input",   () => { const c=$("p-desc-cnt");   if(c) c.textContent=$("p-desc").value.length; });
+  $("p-result")?.addEventListener("input", () => { const c=$("p-result-cnt"); if(c) c.textContent=$("p-result").value.length; });
+  setupModalTabs();
+  const pSaveBtn = $("m-save"); if (pSaveBtn) pSaveBtn.textContent = "Создать проект";
+
 }
 
 // ════════════════════════════════════════
@@ -1018,13 +1004,7 @@ export async function buildIdeaModal(title, defaultDate = null) {
       <div class="mf-tag-pills" id="idea-tags-cont"></div>
     </div>`;
 
-  setTimeout(() => {
-    renderLinkField("idea-link-field", goals, projects, null, null);
-    renderTagPills("idea-tags-cont", [], "idea");
-    $("i-text")?.addEventListener("input", () => { $("i-text-cnt").textContent = $("i-text").value.length; });
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Сохранить идею";
-  }, 0);
+
 
   const _ideaHtml = $("m-body").innerHTML;
   openModal(title || "Новая идея", _ideaHtml, async () => {
@@ -1041,6 +1021,13 @@ export async function buildIdeaModal(title, defaultDate = null) {
     });
     toast("Идея сохранена ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация buildIdeaModal
+  renderLinkField("idea-link-field", goals, projects, null, null);
+  renderTagPills("idea-tags-cont", [], "idea");
+  $("i-text")?.addEventListener("input", () => { const c=$("i-text-cnt"); if(c) c.textContent=$("i-text").value.length; });
+  const ideaSaveBtn = $("m-save"); if (ideaSaveBtn) ideaSaveBtn.textContent = "Сохранить идею";
+
 }
 
 // ════════════════════════════════════════
@@ -1076,15 +1063,6 @@ export async function editIdeaModal(id) {
     </div>
     <button class="mf-delete-btn" onclick="window.delItem('ideas','${id}')">🗑 Удалить идею</button>`;
 
-  setTimeout(() => {
-    renderLinkField("ei-link-field", goals, projects, x.goalId, x.projId);
-    window._tags_ideedit = [...window._tags_idea_edit];
-    renderTagPills("idea-edit-tags-cont", window._tags_ideedit, "ideedit");
-    $("ei-text")?.addEventListener("input", () => { $("ei-text-cnt").textContent = $("ei-text").value.length; });
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Сохранить";
-  }, 0);
-
   const _eiHtml = $("m-body").innerHTML;
   openModal("Редактировать идею", _eiHtml, async () => {
     const t = $("ei-title")?.value.trim();
@@ -1097,6 +1075,14 @@ export async function editIdeaModal(id) {
     });
     toast("Сохранено ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация editIdeaModal — ПОСЛЕ openModal
+  renderLinkField("ei-link-field", goals, projects, x.goalId, x.projId);
+  window._tags_ideedit = [...window._tags_idea_edit];
+  renderTagPills("idea-edit-tags-cont", window._tags_ideedit, "ideedit");
+  $("ei-text")?.addEventListener("input", () => { const c=$("ei-text-cnt"); if(c) c.textContent=$("ei-text").value.length; });
+  const eiSaveBtn = $("m-save"); if (eiSaveBtn) eiSaveBtn.textContent = "Сохранить";
+
 }
 
 // ════════════════════════════════════════
@@ -1188,14 +1174,7 @@ export async function buildDiaryModal(title, tmpl = null, defaultDate = null) {
       <div class="mf-tag-pills" id="diary-tags-cont"></div>
     </div>`;
 
-  setTimeout(() => {
-    renderTagPills("diary-tags-cont", [], "diary");
-    $("d-text")?.addEventListener("input", () => { $("d-text-cnt").textContent = $("d-text").value.length; });
-    const saveBtn = document.getElementById("m-save");
-    if (saveBtn) saveBtn.textContent = "Сохранить запись";
-    const cancelBtn = document.getElementById("m-cancel");
-    if (cancelBtn) cancelBtn.textContent = "Отмена";
-  }, 0);
+
 
   window._selectMood = (btn) => {
     document.querySelectorAll(".mf-mood-btn").forEach(b => b.classList.remove("on"));
@@ -1265,6 +1244,13 @@ export async function buildDiaryModal(title, tmpl = null, defaultDate = null) {
     });
     toast("Запись сохранена ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация buildDiaryModal
+  renderTagPills("diary-tags-cont", [], "diary");
+  $("d-text")?.addEventListener("input", () => { const c=$("d-text-cnt"); if(c) c.textContent=$("d-text").value.length; });
+  const diarySaveBtn = $("m-save"); if (diarySaveBtn) diarySaveBtn.textContent = "Сохранить запись";
+  const diaryCancelBtn = $("m-cancel"); if (diaryCancelBtn) diaryCancelBtn.textContent = "Отмена";
+
 }
 
 // ════════════════════════════════════════
@@ -1347,11 +1333,6 @@ export async function editDiaryModal(id) {
     list.insertBefore(item, addBtn);
   };
 
-  setTimeout(() => {
-    renderTagPills("diary-edit-tags-cont", window._tags_diary_edit, "diaryedit");
-    $("ed-text")?.addEventListener("input", () => { $("ed-text-cnt").textContent = $("ed-text").value.length; });
-  }, 0);
-
   const _edHtml = $("m-body").innerHTML;
   openModal("Редактировать запись", _edHtml, async () => {
     const t = $("ed-title")?.value.trim();
@@ -1368,6 +1349,11 @@ export async function editDiaryModal(id) {
     });
     toast("Сохранено ✓"); closeModal(); window._refreshAll?.();
   });
+
+  // Инициализация editDiaryModal — ПОСЛЕ openModal
+  renderTagPills("diary-edit-tags-cont", window._tags_diary_edit, "diaryedit");
+  $("ed-text")?.addEventListener("input", () => { const c=$("ed-text-cnt"); if(c) c.textContent=$("ed-text").value.length; });
+
 }
 
 // ════════════════════════════════════════
