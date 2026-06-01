@@ -244,21 +244,75 @@ function renderMainTaskCard(t, goals, targetStr) {
 }
 
 function renderTaskRow(t, isDoneToday, targetStr) {
-  const mins = t.duration || t.estimatedMinutes || null;
-  const checkClass = isDoneToday ? "done-full" : "pending";
+  const mins     = t.duration || t.estimatedMinutes || null;
+  const checkClass   = isDoneToday ? "done-full" : "pending";
   const checkContent = isDoneToday ? "✓" : "";
+  const subs     = Array.isArray(t.subtasks) ? t.subtasks : [];
+  const hasSubs  = subs.length > 0;
+  const subsDone = subs.filter(s => s && (typeof s === "object" ? s.done : false)).length;
+  const recType  = t.recurrence?.type;
+  const hasRecur = recType && recType !== "none";
+  const hasDl    = !!t.deadline;
+  // Форматируем дедлайн
+  let dlLabel = "";
+  if (hasDl) {
+    try {
+      const d = t.deadline?.toDate ? t.deadline.toDate() : new Date(t.deadline);
+      const m = ["янв","фев","мар","апр","мая","июн","июл","авг","сен","окт","ноя","дек"][d.getMonth()];
+      dlLabel = `${d.getDate()} ${m}`;
+    } catch(_) {}
+  }
+  const recurIcon = { daily:"↻д", weekly:"↻н", monthly:"↻м" }[recType] || "↻";
+  const subsId = "subs-" + t.id;
 
   return `
-    <div class="plan-task-row" onclick="window.editTask('${t.id}')">
+    <div class="plan-task-row ${isDoneToday ? "done-row" : ""}" onclick="window.editTask('${t.id}')">
       <button class="plan-tr-check ${checkClass}"
         data-tid="${t.id}" data-date="${targetStr}"
         onclick="event.stopPropagation();window._toggleTaskOnDate(this.dataset.tid, this.dataset.date)">
         ${checkContent}
       </button>
-      <span class="plan-tr-title ${isDoneToday ? "done" : ""}">${esc(t.title)}</span>
-      ${mins ? `<span class="plan-tr-time">${mins} мин</span>` : ""}
-    </div>`;
+      <div class="plan-tr-body">
+        <div class="plan-tr-main">
+          <span class="plan-tr-title ${isDoneToday ? "done" : ""}">${esc(t.title)}</span>
+          <div class="plan-tr-meta">
+            ${mins     ? `<span class="plan-tr-badge time">⏱ ${mins < 60 ? mins + "м" : Math.floor(mins/60) + "ч" + (mins%60 ? (mins%60)+"м" : "")}</span>` : ""}
+            ${hasDl    ? `<span class="plan-tr-badge dl">📅 ${dlLabel}</span>` : ""}
+            ${hasRecur ? `<span class="plan-tr-badge recur">${recurIcon}</span>` : ""}
+            ${hasSubs  ? `<span class="plan-tr-badge subs">${subsDone}/${subs.length}</span>` : ""}
+          </div>
+        </div>
+        ${hasSubs ? `
+          <button class="plan-tr-expand"
+            onclick="event.stopPropagation();window._toggleSubs('${subsId}')">
+            <span id="${subsId}-arrow">▸</span>
+          </button>` : ""}
+      </div>
+    </div>
+    ${hasSubs ? `
+    <div class="plan-tr-subs" id="${subsId}" style="display:none">
+      ${subs.map((s, si) => {
+        const subTitle = typeof s === "object" ? (s.title || s) : s;
+        const subDone  = typeof s === "object" ? !!s.done : false;
+        return `<div class="plan-tr-sub-row">
+          <span class="plan-tr-sub-dot ${subDone ? "done" : ""}">
+            ${subDone ? "✓" : "○"}
+          </span>
+          <span class="plan-tr-sub-title ${subDone ? "done" : ""}">${esc(String(subTitle))}</span>
+        </div>`;
+      }).join("")}
+    </div>` : ""}`;
 }
+
+// Раскрыть/свернуть подзадачи
+window._toggleSubs = (subsId) => {
+  const el  = document.getElementById(subsId);
+  const arr = document.getElementById(subsId + "-arrow");
+  if (!el) return;
+  const open = el.style.display === "none" || el.style.display === "";
+  el.style.display  = open ? "block" : "none";
+  if (arr) arr.textContent = open ? "▾" : "▸";
+};
 
 // ════════════════════════════════════════
 //  ГЛАВНЫЙ РЕНДЕР
