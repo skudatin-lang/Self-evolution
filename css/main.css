@@ -4753,3 +4753,20 @@ html, body {
   color:var(--acc2); text-transform:uppercase; letter-spacing:.05em;
   cursor:pointer; user-select:none;
 }
+
+/* ═══════════════════════════════════════
+   FAILED TASKS — провалено
+   ═══════════════════════════════════════ */
+.failed-row { opacity:.75; }
+.plan-tr-check.failed {
+  background:rgba(255,92,143,0.1) !important;
+  border-color:var(--red) !important;
+  color:var(--red) !important;
+  cursor:pointer;
+}
+.plan-tr-check.failed:hover { background:rgba(255,92,143,0.2) !important; }
+.plan-tr-title.failed {
+  text-decoration:line-through;
+  color:var(--red);
+  opacity:.7;
+}
