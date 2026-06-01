@@ -29,7 +29,7 @@ import { initDiary, renderDiary }        from "./tabs/diary.js";
 import { initProfileTab, renderProfileTab } from "./tabs/profile-tab.js";
 import { initAnalytics, renderAnalytics }   from "./tabs/analytics.js";
 import { initAiChat, renderAiChat }         from "./tabs/ai-chat.js";
-import { saveWeekGoal, cleanupRecurringChildren } from "./db.js";
+import { saveWeekGoal, cleanupRecurringChildren, markFailedTasks } from "./db.js";
 import { openProfileDialog }             from "./profile.js";
 import { openBankDialog }                from "./actions-bank.js";
 import { MONTHS }                        from "./utils.js";
@@ -288,6 +288,14 @@ onAuthStateChanged(auth, async user => {
       cleanupRecurringChildren().then(n => {
         if (n > 0) { refreshAll(); console.log(`[app] Cleaned ${n} recurring children`); }
       });
+
+      // Авто-пометка невыполненных задач прошлых дней как "провалено"
+      markFailedTasks().then(n => {
+        if (n > 0) {
+          console.log(`[app] Marked ${n} tasks as failed`);
+          refreshAll();
+        }
+      }).catch(e => console.warn("[app] markFailedTasks error:", e));
 
       // Survey check (every 30 days)
       setTimeout(async () => {

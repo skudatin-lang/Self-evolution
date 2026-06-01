@@ -295,6 +295,45 @@ export const toggleTask = async (id, targetDate) => {
   }
 };
 
+// ── Отметить просроченные задачи как "провалено" ──
+// Вызывается при загрузке приложения (app.js)
+// Обычная задача: date < today, done=false → status="failed", failedDate=yesterday
+export const markFailedTasks = async () => {
+  const all = await getTasks();
+  const today2 = dstr(new Date());
+  // Вчера — конец прошлого дня
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = dstr(yesterday);
+
+  const toFail = all.filter(t => {
+    if (t.done || t.status === "failed" || t.displaced) return false;
+    // Повторяющиеся задачи не помечаем как провалено
+    if (t.recurrence && t.recurrence.type !== "none") return false;
+    // Задача запланирована на прошлый день (не сегодня и не будущее)
+    if (!t.date) return false;
+    return t.date < today2;
+  });
+
+  if (!toFail.length) return 0;
+
+  const { writeBatch } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const { db: dbInst } = await import("./firebase.js");
+  const batch = writeBatch(dbInst);
+  const uid = getUid();
+
+  for (const t of toFail) {
+    const ref = ud("tasks", t.id);
+    batch.update(ref, {
+      status:     "failed",
+      failedDate: t.date, // дата когда должна была быть выполнена
+      done:       false,
+    });
+  }
+
+  await batch.commit();
+  return toFail.length;
+};
+
 // ── Сохранение оценки энергии после задачи (1–5) ──
 export const saveEnergyScore = async (id, score) => {
   await updateDoc(ud("tasks", id), { energyScore: score, energyScoredAt: dstr(new Date()) });
