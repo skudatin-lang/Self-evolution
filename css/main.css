@@ -4770,3 +4770,19 @@ html, body {
   color:var(--red);
   opacity:.7;
 }
+
+/* ═══════════════════════════════════════
+   MAIN TASK CARD — правая часть (звёздочка + раскрывашка)
+   ═══════════════════════════════════════ */
+.plan-mtc-right {
+  display:flex; align-items:center; gap:6px; flex-shrink:0;
+}
+.plan-main-task-card.done-main {
+  opacity:.7;
+}
+/* Отступ подзадач под главной карточкой */
+.plan-mtc-subs {
+  padding-left:52px;
+  background:rgba(124,92,255,0.03);
+  border-radius:0 0 var(--r) var(--r);
+}
