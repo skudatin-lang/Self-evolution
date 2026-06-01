@@ -215,15 +215,19 @@ function recurMatchesDate(t, target) {
 //  не через глобальную переменную (надёжнее)
 // ════════════════════════════════════════
 function renderMainTaskCard(t, goals, targetStr) {
-  // Задача выполнена именно в этот день?
   const isDoneToday = t.done && t.completedDate === targetStr;
-  const goalName = goals.find(g => g.id === t.goalId)?.title || "";
-  const catLabel = goalName ? goalName.slice(0, 12) : (t.category || "");
-  const catColor = t.goalColor || "#7C5CFF";
-  const mins = t.duration || t.estimatedMinutes || null;
+  const goalName  = goals.find(g => g.id === t.goalId)?.title || "";
+  const catLabel  = goalName ? goalName.slice(0, 12) : (t.category || "");
+  const catColor  = t.goalColor || "#7C5CFF";
+  const mins      = t.duration || t.estimatedMinutes || null;
+  const subs      = Array.isArray(t.subtasks) ? t.subtasks : [];
+  const hasSubs   = subs.length > 0;
+  const subsDone  = subs.filter(s => s && (typeof s === "object" ? s.done : false)).length;
+  const subsId    = "msubs-" + t.id;
 
   return `
-    <div class="plan-main-task-card" onclick="window.editTask('${t.id}')">
+    <div class="plan-main-task-card ${isDoneToday ? "done-main" : ""}"
+      onclick="window.editTask('${t.id}')">
       <button class="plan-mtc-check ${isDoneToday ? "done" : ""}"
         data-tid="${t.id}" data-date="${targetStr}"
         onclick="event.stopPropagation();window._toggleTaskOnDate(this.dataset.tid, this.dataset.date)">
@@ -234,13 +238,34 @@ function renderMainTaskCard(t, goals, targetStr) {
         <div class="plan-mtc-tags">
           ${catLabel ? `<span class="plan-mtc-cat" style="background:${catColor}22;color:${catColor}">${esc(catLabel)}</span>` : ""}
           ${mins ? `<span class="plan-mtc-time">${mins} мин</span>` : ""}
+          ${hasSubs ? `<span class="plan-tr-badge subs">${subsDone}/${subs.length}</span>` : ""}
         </div>
       </div>
-      <span class="plan-mtc-star"
-        onclick="event.stopPropagation();window._toggleMain('${t.id}')">
-        ${t.isMain || t.priority === "high" ? "⭐" : "☆"}
-      </span>
-    </div>`;
+      <div class="plan-mtc-right">
+        ${hasSubs ? `
+          <button class="plan-tr-expand"
+            onclick="event.stopPropagation();window._toggleSubs('${subsId}')">
+            <span id="${subsId}-arrow">▸</span>
+          </button>` : ""}
+        <span class="plan-mtc-star"
+          onclick="event.stopPropagation();window._toggleMain('${t.id}')">
+          ${t.isMain || t.priority === "high" ? "⭐" : "☆"}
+        </span>
+      </div>
+    </div>
+    ${hasSubs ? `
+    <div class="plan-tr-subs plan-mtc-subs" id="${subsId}" style="display:none">
+      ${subs.map(s => {
+        const subTitle = typeof s === "object" ? (s.title || String(s)) : String(s);
+        const subDone  = typeof s === "object" ? !!s.done : false;
+        return `<div class="plan-tr-sub-row">
+          <span class="plan-tr-sub-dot ${subDone ? "done" : ""}">
+            ${subDone ? "✓" : "○"}
+          </span>
+          <span class="plan-tr-sub-title ${subDone ? "done" : ""}">${esc(subTitle)}</span>
+        </div>`;
+      }).join("")}
+    </div>` : ""}`;
 }
 
 function renderTaskRow(t, isDoneToday, targetStr) {
@@ -369,7 +394,12 @@ async function renderPlanMain(tasks, goals, projects) {
     const isRecurring = t.recurrence && t.recurrence.type !== "none";
 
     if (isRecurring) {
-      return recurMatchesDate(t, tgt);
+      // Показываем если:
+      // 1. расписание совпадает с этим днём
+      if (recurMatchesDate(t, tgt)) return true;
+      // 2. помечена как провалено в этот день (failedDates содержит targetStr)
+      if (Array.isArray(t.failedDates) && t.failedDates.includes(targetStr)) return true;
+      return false;
     }
 
     // Обычная задача — показываем если:
@@ -385,10 +415,27 @@ async function renderPlanMain(tasks, goals, projects) {
 
   // ── Разбивка: открытые / выполненные / провалено за выбранный день ──
   const doneTasks   = dayTasks.filter(t => t.done && t.completedDate === targetStr);
-  const failedTasks = dayTasks.filter(t => t.status === "failed" && t.failedDate === targetStr);
-  const openOnTarget = dayTasks.filter(t =>
-    !(t.done && t.completedDate === targetStr) && t.status !== "failed"
-  );
+  const failedTasks = dayTasks.filter(t => {
+    // Обычные задачи: status="failed" и failedDate === targetStr
+    if (t.status === "failed" && t.failedDate === targetStr) return true;
+    // Повторяющиеся: failedDates содержит targetStr
+    const isRecurring = t.recurrence && t.recurrence.type !== "none";
+    if (isRecurring && Array.isArray(t.failedDates) && t.failedDates.includes(targetStr)) {
+      // НО только если задача не выполнена в этот день
+      return !(t.done && t.completedDate === targetStr);
+    }
+    return false;
+  });
+  const openOnTarget = dayTasks.filter(t => {
+    if (t.status === "failed") return false;
+    const isRecurring = t.recurrence && t.recurrence.type !== "none";
+    if (isRecurring) {
+      // Повторяющаяся открыта если НЕ выполнена в этот конкретный день
+      return !(t.done && t.completedDate === targetStr);
+    }
+    // Обычная: открыта если НЕ выполнена в этот день
+    return !(t.done && t.completedDate === targetStr);
+  });
 
   // Главные задачи — только из открытых
   const mainTasks  = openOnTarget.filter(t => t.priority === "high" || t.isMain).slice(0, 3);
