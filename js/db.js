@@ -279,11 +279,25 @@ export const toggleTask = async (id, targetDate) => {
 
   if (isRecurring) {
     // Повторяющиеся: done привязан к конкретному дню
-    const doneOnDate = t.done && t.completedDate === dateStr;
+    // completedDates — массив всех дат выполнения (история)
+    const completedDates = Array.isArray(t.completedDates) ? t.completedDates : [];
+    const doneOnDate = completedDates.includes(dateStr) || t.completedDate === dateStr;
     if (doneOnDate) {
-      await updateDoc(ud("tasks", id), { done: false, completedDate: null });
+      // Снимаем отметку за этот день
+      const newDates = completedDates.filter(d => d !== dateStr);
+      await updateDoc(ud("tasks", id), {
+        done: newDates.length > 0,
+        completedDate: newDates.length > 0 ? newDates[newDates.length - 1] : null,
+        completedDates: newDates,
+      });
     } else {
-      await updateDoc(ud("tasks", id), { done: true, completedDate: dateStr });
+      // Отмечаем выполненной в этот день
+      const newDates = [...new Set([...completedDates, dateStr])];
+      await updateDoc(ud("tasks", id), {
+        done: true,
+        completedDate: dateStr,
+        completedDates: newDates,
+      });
     }
   } else {
     // Обычные задачи
@@ -375,7 +389,10 @@ export const markFailedTasks = async () => {
         if (alreadyFailed.has(t.id + "|" + dayStr)) continue;
 
         // Была выполнена в этот день?
-        if (t.done && t.completedDate === dayStr) continue;
+        // Проверяем как completedDate (одиночный) так и completedDates (массив истории)
+        const doneThisDay = (t.completedDate === dayStr) ||
+          (Array.isArray(t.completedDates) && t.completedDates.includes(dayStr));
+        if (doneThisDay) continue;
 
         // Не выполнена и не помечена → провалена
         updates.push({ id: t.id + "_recur_" + dayStr, recurId: t.id, failedDate: dayStr });
