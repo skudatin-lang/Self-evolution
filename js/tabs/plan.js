@@ -16,6 +16,29 @@ let showAll  = false;
 export function initPlan() { registerTab("plan", renderPlan); }
 
 // ════════════════════════════════════════
+//  УТРЕННИЙ ПЛАН AI — надёжный запуск
+// ════════════════════════════════════════
+window._launchAiPlan = async () => {
+  // Если уже загружен — запускаем сразу
+  if (typeof window.openAiPlan === "function") {
+    window.openAiPlan();
+    return;
+  }
+  // Пробуем загрузить ai-plan.js
+  try {
+    await import("../ai-plan.js");
+    if (typeof window.openAiPlan === "function") {
+      window.openAiPlan();
+    } else {
+      window._toast?.("AI план недоступен — проверьте что js/ai-plan.js загружен в репозиторий");
+    }
+  } catch(e) {
+    window._toast?.("Ошибка загрузки AI плана: " + e.message);
+    console.error("ai-plan.js load error:", e);
+  }
+};
+
+// ════════════════════════════════════════
 //  TOGGLE ЗАДАЧИ — передаём выбранный день
 // ════════════════════════════════════════
 window._toggleTaskOnDate = async (id, dateStr) => {
@@ -224,6 +247,9 @@ function renderMainTaskCard(t, goals, targetStr) {
   const hasSubs   = subs.length > 0;
   const subsDone  = subs.filter(s => s && (typeof s === "object" ? s.done : false)).length;
   const subsId    = "msubs-" + t.id;
+  const recType   = t.recurrence?.type;
+  const hasRecur  = recType && recType !== "none";
+  const recurIcon = { daily:"↻д", weekly:"↻н", monthly:"↻м" }[recType] || "↻";
 
   return `
     <div class="plan-main-task-card ${isDoneToday ? "done-main" : ""}"
@@ -238,6 +264,7 @@ function renderMainTaskCard(t, goals, targetStr) {
         <div class="plan-mtc-tags">
           ${catLabel ? `<span class="plan-mtc-cat" style="background:${catColor}22;color:${catColor}">${esc(catLabel)}</span>` : ""}
           ${mins ? `<span class="plan-mtc-time">${mins} мин</span>` : ""}
+          ${hasRecur ? `<span class="plan-tr-badge recur">${recurIcon}</span>` : ""}
           ${hasSubs ? `<span class="plan-tr-badge subs">${subsDone}/${subs.length}</span>` : ""}
         </div>
       </div>
@@ -431,8 +458,12 @@ async function renderPlanMain(tasks, goals, projects) {
   // Задача ОТКРЫТАЯ: только если isToday AND не выполнена AND не провалена
   // ════════════════════════════════════════
 
-  const isDoneOnTarget = t =>
-    t.done && t.completedDate === targetStr;
+  const isDoneOnTarget = t => {
+    // Проверяем completedDate (одиночный) И completedDates (история для повторяющихся)
+    if (t.completedDate === targetStr) return true;
+    if (Array.isArray(t.completedDates) && t.completedDates.includes(targetStr)) return true;
+    return false;
+  };
 
   const isFailedOnTarget = t => {
     const isRec = t.recurrence && t.recurrence.type !== "none";
@@ -474,7 +505,7 @@ async function renderPlanMain(tasks, goals, projects) {
     ${isToday ? `
       <div class="plan-ai-strip">
         <button class="plan-ai-btn primary"
-          onclick="window.openAiPlan && window.openAiPlan()">
+          onclick="window._launchAiPlan()">
           <span class="plan-ai-ico">✨</span>
           <span>Утренний план от AI</span>
           <span class="plan-ai-sub">Создать план дня с AI</span>

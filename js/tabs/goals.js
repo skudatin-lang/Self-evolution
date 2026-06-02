@@ -1119,7 +1119,14 @@ function renderGoalsSteps(goals, tasks) {
   const shown = withProgress.slice(0, 5);
 
   panel.innerHTML = `
-    <div class="goals-steps-title">Ближайшие шаги</div>
+    <div class="goals-steps-header">
+      <div class="goals-steps-title">Ближайшие шаги</div>
+      <label class="goals-show-done-toggle">
+        <input type="checkbox" id="goals-show-done-chk" ${fmtShowDone ? "checked" : ""}
+          onchange="window._fmtShowDone()"/>
+        <span>Показать выполненные</span>
+      </label>
+    </div>
     ${shown.map(({ g, pct, color }) => `
       <div class="goal-step-row" onclick="window._openGoalDetail?.('${g.id}')">
         <div class="goal-step-ico" style="border:1.5px solid ${color}40">
