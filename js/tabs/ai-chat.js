@@ -21,6 +21,8 @@ const QUICK_PROMPTS = [
 ];
 
 export async function renderAiChat() {
+  // Сохраняем ссылку для _aicReset
+  window._renderAiChatFn = renderAiChat;
   document.getElementById("tb-ttl").textContent = "AI-ассистент";
   const body = document.getElementById("ai-chat-body");
   if (!body) return;
@@ -34,6 +36,16 @@ export async function renderAiChat() {
     <div class="aic-hero">
       <div class="aic-avatar">◆</div>
       <div class="aic-hero-text">Как я могу помочь?</div>
+    </div>
+
+    <!-- Инструменты AI -->
+    <div class="aic-tools-row">
+      <button class="aic-tool-btn" onclick="window._planAiAnalysis?.()">
+        <span>🔍</span><span>Стратегический анализ</span>
+      </button>
+      <button class="aic-tool-btn" onclick="window._openBankDialog?.()">
+        <span>⚡</span><span>Банк действий</span>
+      </button>
     </div>
 
     <!-- Быстрые запросы -->
@@ -220,6 +232,20 @@ function appendMessage(m) {
 
   // Скрываем быстрые кнопки после первого сообщения
   document.getElementById("aic-quick")?.style.setProperty("display", "none");
+
+  // Показываем кнопку "Новый вопрос" (если ещё нет)
+  if (!document.getElementById("aic-new-btn")) {
+    const bar = document.getElementById("aic-input-bar");
+    if (bar) {
+      const btn = document.createElement("button");
+      btn.id = "aic-new-btn";
+      btn.className = "aic-new-question-btn";
+      btn.textContent = "← Новый вопрос";
+      btn.title = "Вернуться к списку быстрых вопросов";
+      btn.onclick = () => window._aicReset();
+      bar.parentElement.insertBefore(btn, bar);
+    }
+  }
 }
 
 window._aicSend = () => {
@@ -236,4 +262,15 @@ window._aicSendQuick = text => {
 window._aicShowFullAnalysis = () => {
   window._toast?.("Запускается полный стратегический анализ...");
   window._planAiAnalysis?.();
+};
+
+// Сбросить чат — вернуться к начальному экрану с быстрыми вопросами
+window._aicReset = () => {
+  chatHistory = [];
+  isLoading   = false;
+  // Удаляем кнопку "Новый вопрос"
+  document.getElementById("aic-new-btn")?.remove();
+  // Перерисовываем вкладку с нуля
+  const { renderAiChat } = { renderAiChat: window._renderAiChatFn };
+  if (window._renderAiChatFn) window._renderAiChatFn();
 };
