@@ -5034,3 +5034,12 @@ html, body {
   cursor:pointer; transition:all var(--tt);
 }
 .aip-btn-check:hover { background:rgba(77,255,180,0.2); }
+
+/* ═══════════════════════════════════════
+   PLAN — subtask checkboxes
+   ═══════════════════════════════════════ */
+.plan-sub-check {
+  width:15px; height:15px; min-width:15px; flex-shrink:0;
+  accent-color:var(--go); cursor:pointer;
+  margin-top:1px;
+}
