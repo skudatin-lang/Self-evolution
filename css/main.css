@@ -4820,3 +4820,21 @@ html, body {
   accent-color:var(--go); cursor:pointer;
   width:14px; height:14px;
 }
+
+/* ═══════════════════════════════════════
+   AI CHAT — кнопка "Новый вопрос"
+   ═══════════════════════════════════════ */
+.aic-new-question-btn {
+  display:block; width:calc(100% - 32px); margin:8px 16px 0;
+  padding:10px 16px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--bd);
+  border-radius:var(--rl);
+  color:var(--tx-l); font-family:var(--fd); font-size:12px;
+  font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  cursor:pointer; transition:all var(--tt); text-align:left;
+}
+.aic-new-question-btn:hover {
+  border-color:var(--go); color:var(--go);
+  background:rgba(77,255,180,0.04);
+}
