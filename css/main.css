@@ -4786,3 +4786,37 @@ html, body {
   background:rgba(124,92,255,0.03);
   border-radius:0 0 var(--r) var(--r);
 }
+
+/* ═══════════════════════════════════════
+   SUBTASKS WITH CHECKBOXES
+   ═══════════════════════════════════════ */
+.mf-subtask-row {
+  display:flex; align-items:center; gap:8px;
+}
+.mf-sub-check {
+  width:16px; height:16px; min-width:16px;
+  accent-color:var(--acc2); cursor:pointer; flex-shrink:0;
+}
+.mf-sub-inp { flex:1; }
+.done-sub {
+  text-decoration:line-through;
+  color:var(--tx-l);
+  opacity:.7;
+}
+
+/* ═══════════════════════════════════════
+   GOALS — show/hide done toggle
+   ═══════════════════════════════════════ */
+.goals-steps-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:10px;
+}
+.goals-show-done-toggle {
+  display:flex; align-items:center; gap:6px; cursor:pointer;
+  font-family:var(--fb); font-size:12px; color:var(--tx-l);
+  user-select:none;
+}
+.goals-show-done-toggle input[type="checkbox"] {
+  accent-color:var(--go); cursor:pointer;
+  width:14px; height:14px;
+}
