@@ -429,8 +429,12 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
           </select>
         </div>
         <div class="mf-group mf-group-half">
-          <label class="mf-label">Дедлайн</label>
-          <div id="t-dl-field"></div>
+          <label class="mf-label">Приоритет</label>
+          <div class="mf-pri-row">
+            <button type="button" class="mf-pri-btn" data-pri="high" onclick="window._setPri('high')">🔴 Высокий</button>
+            <button type="button" class="mf-pri-btn on-med" data-pri="med" onclick="window._setPri('med')">🟡 Средний</button>
+            <button type="button" class="mf-pri-btn" data-pri="low" onclick="window._setPri('low')">🟢 Низкий</button>
+          </div>
         </div>
       </div>
 
@@ -450,10 +454,24 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
         <textarea class="mf-textarea" id="t-note" placeholder="Дополнительные заметки..."></textarea>
       </div>
 
+      <!-- Строка 1: Начало / Дедлайн -->
       <div class="mf-row">
         <div class="mf-group mf-group-half">
           <label class="mf-label">Начало</label>
           <div id="t-start-field"></div>
+        </div>
+        <div class="mf-group mf-group-half">
+          <label class="mf-label">Дедлайн</label>
+          <div id="t-dl-field"></div>
+        </div>
+      </div>
+
+      <!-- Строка 2: Повторить до / Напоминание -->
+      <div class="mf-row">
+        <div class="mf-group mf-group-half">
+          <label class="mf-label">Повторить до</label>
+          <div id="t-until-field-row" style="display:none"><div id="t-until-field"></div></div>
+          <div id="t-until-placeholder" style="color:var(--tx-l);font-size:12px;font-style:italic">Задайте повторение выше</div>
         </div>
         <div class="mf-group mf-group-half">
           <label class="mf-label">Напоминание</label>
@@ -482,15 +500,6 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
         </div>
       </div>
 
-      <div class="mf-group">
-        <label class="mf-label">Приоритет</label>
-        <div class="mf-pri-row">
-          <button type="button" class="mf-pri-btn" data-pri="high" onclick="window._setPri('high')">🔴 Высокий</button>
-          <button type="button" class="mf-pri-btn on-med" data-pri="med" onclick="window._setPri('med')">🟡 Средний</button>
-          <button type="button" class="mf-pri-btn" data-pri="low" onclick="window._setPri('low')">🟢 Низкий</button>
-        </div>
-      </div>
-
     </div>`;
 
   // Передаём HTML в openModal — он записывает в m-body синхронно
@@ -515,14 +524,20 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
         deadline:    dlRaw || null,
         startDate:   startRaw || null,
         priority:    getActivePriority(),
-        subtasks:    getSubtasks(),
+        subtasks:    [...($("sub-list")?.querySelectorAll(".mf-subtask-row") || [])].map(row => {
+          const cb    = row.querySelector("input[type=checkbox]");
+          const inp   = row.querySelector("input.mf-sub-inp") || row.querySelector("input:not([type=checkbox])");
+          const title = inp?.value.trim() || "";
+          const done  = cb?.checked || false;
+          return title ? { title, done } : null;
+        }).filter(Boolean),
         date:        startRaw ? startRaw.slice(0,10) : (defaultDate || today()),
         reminder:    dtpVal("t-reminder") || null,
         duration:    dur,
-        importance:  parseInt($("t-importance")?.value) || 5,
-        urgency:     parseInt($("t-urgency")?.value) || 5,
-        energyCost:  parseInt($("t-energy-cost")?.value) || 5,
-        resistance:  parseInt($("t-resistance")?.value) || 5,
+        importance:  parseInt(document.getElementById("t-importance")?.value) || 5,
+        urgency:     parseInt(document.getElementById("t-urgency")?.value) || 5,
+        energyCost:  parseInt(document.getElementById("t-energy-cost")?.value) || 5,
+        resistance:  parseInt(document.getElementById("t-resistance")?.value) || 5,
         recurrence: recType !== "none" ? {
           type:      recType, interval: 1, until: untilVal,
           weekdays:  recType === "weekly"  && weekdays.length  ? weekdays  : null,
@@ -538,7 +553,13 @@ export async function buildTaskModal(title, defGoalId = null, defProjId = null, 
   // Вставляем компоненты ПОСЛЕ openModal (m-body уже содержит HTML)
   renderLinkField("t-link-field", goals, projects, defGoalId, defProjId);
   const dlFieldEl = $("t-dl-field");
-  if (dlFieldEl) dlFieldEl.replaceWith(makeDateField("t-dl", false, defaultDate || ""));
+  if (dlFieldEl) {
+    // Дедлайн: дата + время, дефолт 23:00 текущего дня
+    const dlDefault = defaultDate
+      ? defaultDate + "T23:00"
+      : (today() + "T23:00");
+    dlFieldEl.replaceWith(makeDateField("t-dl", true, dlDefault));
+  }
   const startFieldEl = $("t-start-field");
   if (startFieldEl) startFieldEl.replaceWith(makeDateField("t-start", true));
   const remFieldEl = $("t-reminder-field");
@@ -567,9 +588,14 @@ window._addTaskSubtask = () => {
   if (!list) return;
   const row = document.createElement("div");
   row.className = "mf-subtask-row";
-  row.innerHTML = `<input class="mf-input" placeholder="Название подзадачи"/><button type="button" class="mf-subtask-rm" onclick="this.closest('.mf-subtask-row').remove()">×</button>`;
+  row.innerHTML = `
+    <input type="checkbox" class="mf-sub-check"
+      onchange="this.nextElementSibling.classList.toggle('done-sub',this.checked)"/>
+    <input class="mf-input mf-sub-inp" placeholder="Название подзадачи"/>
+    <button type="button" class="mf-subtask-rm"
+      onclick="this.closest('.mf-subtask-row').remove()">×</button>`;
   list.appendChild(row);
-  row.querySelector("input")?.focus();
+  row.querySelector(".mf-sub-inp")?.focus();
 };
 
 function getTaskSubtasks() {
@@ -667,7 +693,16 @@ export async function editTaskModal(id) {
       <div class="mf-group">
         <label class="mf-label">Подзадачи</label>
         <div id="sub-list" class="mf-subtasks-list">
-          ${(t.subtasks||[]).map(s=>`<div class="mf-subtask-row"><input class="mf-input" value="${esc(s)}"/><button type="button" class="mf-subtask-rm" onclick="this.closest('.mf-subtask-row').remove()">×</button></div>`).join("")}
+          ${(t.subtasks||[]).map(s => {
+          const subTitle = typeof s === "object" ? (s.title || "") : String(s||"");
+          const subDone  = typeof s === "object" ? !!s.done : false;
+          return `<div class="mf-subtask-row">
+            <input type="checkbox" class="mf-sub-check" ${subDone ? "checked" : ""}
+              onchange="this.nextElementSibling.classList.toggle('done-sub',this.checked)"/>
+            <input class="mf-input mf-sub-inp ${subDone ? "done-sub" : ""}" value="${esc(subTitle)}"/>
+            <button type="button" class="mf-subtask-rm" onclick="this.closest('.mf-subtask-row').remove()">×</button>
+          </div>`;
+        }).join("")}
         </div>
         <button type="button" class="mf-add-sub-btn" onclick="window._addTaskSubtask()">+ Добавить подзадачу</button>
       </div>
@@ -721,7 +756,13 @@ export async function editTaskModal(id) {
     const recType   = $("et-recurrence-type")?.value || "none";
     const untilVal  = recType !== "none" ? (dtpVal("et-until") || null) : null;
     const startRaw  = dtpVal("et-st"); const dlRaw = dtpVal("et-dl");
-    const newSubs   = [...($("sub-list")?.querySelectorAll(".mf-subtask-row input")||[])].map(i=>i.value.trim()).filter(Boolean);
+    const newSubs = [...($("sub-list")?.querySelectorAll(".mf-subtask-row") || [])].map(row => {
+        const cb    = row.querySelector("input[type=checkbox]");
+        const inp   = row.querySelector("input.mf-sub-inp") || row.querySelector("input:not([type=checkbox])");
+        const title = inp?.value.trim() || "";
+        const done  = cb?.checked || false;
+        return title ? { title, done } : null;
+      }).filter(Boolean);
     try {
       // Читаем ползунки через value атрибут range input (надёжнее чем textContent)
       const getSlider = id => parseInt(document.getElementById(id)?.value) || 5;
@@ -753,7 +794,14 @@ export async function editTaskModal(id) {
 
   // Инициализация компонентов editTaskModal
   renderLinkField("et-link-field", goals, projects, t.goalId, t.projId);
-  const etDlEl = $("et-dl-field"); if (etDlEl) etDlEl.replaceWith(makeDateField("et-dl", false, dlVal?.slice(0,10) || ""));
+  const etDlEl = $("et-dl-field");
+  if (etDlEl) {
+    // Дедлайн с временем; если есть сохранённое время — берём его, иначе 23:00
+    const etDlDefault = dlVal
+      ? (dlVal.length <= 10 ? dlVal + "T23:00" : dlVal)
+      : "";
+    etDlEl.replaceWith(makeDateField("et-dl", true, etDlDefault));
+  }
   const etStEl = $("et-start-field"); if (etStEl) etStEl.replaceWith(makeDateField("et-st", true, stVal));
   const etRemEl = $("et-reminder-field"); if (etRemEl) etRemEl.replaceWith(makeDateField("et-reminder", true, remVal));
   const etUntilEl = $("et-until-field"); if (etUntilEl) etUntilEl.replaceWith(makeDateField("et-until", false, recurrence.until || ''));
