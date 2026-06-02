@@ -301,11 +301,18 @@ export const toggleTask = async (id, targetDate) => {
     }
   } else {
     // Обычные задачи
-    const nowDone = !t.done;
-    const update = { done: nowDone };
-    if (nowDone) update.completedDate = dateStr;
-    else         update.completedDate = null;
-    await updateDoc(ud("tasks", id), update);
+    // Если задача уже выполнена — снимаем только если completedDate === dateStr
+    // Это предотвращает снятие отметки выполнения при просмотре прошлых дней
+    if (t.done) {
+      if (t.completedDate === dateStr) {
+        // Снимаем отметку
+        await updateDoc(ud("tasks", id), { done: false, completedDate: null });
+      }
+      // Если completedDate != dateStr — задача выполнена в другой день, не трогаем
+      return;
+    }
+    // Отмечаем выполненной
+    await updateDoc(ud("tasks", id), { done: true, completedDate: dateStr });
   }
 };
 
@@ -352,12 +359,20 @@ export const markFailedTasks = async () => {
 
   // ── Обычные задачи: date < today, не выполнены ──
   for (const t of all) {
-    if (t.done || t.status === "failed" || t.displaced) continue;
+    // Пропускаем уже обработанные
+    if (t.status === "failed" || t.displaced) continue;
     if (t.recurrence && t.recurrence.type !== "none") continue;
     if (!t.date) continue;
-    if (t.date < today2) {
-      updates.push({ id: t.id, failedDate: t.date });
-    }
+    if (t.date >= today2) continue; // только прошлые дни
+
+    // Задача выполнена если done=true ИЛИ completedDate совпадает с датой задачи
+    // Это защищает от гонки условий когда done был сброшен но completedDate остался
+    const wasCompleted = t.done ||
+      (t.completedDate && t.completedDate >= t.date) ||
+      (Array.isArray(t.completedDates) && t.completedDates.some(d => d >= t.date));
+    if (wasCompleted) continue;
+
+    updates.push({ id: t.id, failedDate: t.date });
   }
 
   // ── Повторяющиеся задачи: для каждого прошлого дня (до 30 дней назад) ──
