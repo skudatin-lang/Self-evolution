@@ -268,8 +268,10 @@ async function generatePlan() {
 - НЕ пиши «у пользователя» — пиши «ты», «твой», «тебе»
 - authorship_rate = задачи помеченные is_author_action:true или authorAction=да / всё выполненное
 - Алерты только для задач: приоритет=high И просрочка >= 2 дней
-- Варианты A/B/C должны РЕАЛЬНО отличаться по нагрузке (лёгкая/средняя/высокая)
-- Максимум задач: лёгкая=2, средняя=3-4, высокая=4-5
+- ОБЯЗАТЕЛЬНО верни ровно 3 варианта: A (лёгкая нагрузка), B (средняя нагрузка), C (высокая нагрузка)
+- Варианты A/B/C РЕАЛЬНО отличаются по нагрузке: A=2 задачи, B=3-4 задачи, C=4-5 задач
+- Если не можешь сгенерировать 3 варианта — уменьши задачи но сохрани 3 варианта
+- КРИТИЧНО: массив "variants" должен содержать ровно 3 элемента — не 1, не 2, а 3
 ${buildProfileSystemPrompt()}`;
 
   // ── DEBUG: сохраняем для просмотра ──
@@ -290,7 +292,7 @@ ${buildProfileSystemPrompt()}`;
     },
     body: JSON.stringify({
       model: "deepseek/deepseek-chat",
-      max_tokens: 4000,
+      max_tokens: 6000,
       temperature: 0.6,
       messages: [
         { role: "system", content: systemPrompt },
@@ -321,8 +323,26 @@ ${buildProfileSystemPrompt()}`;
 
   // Варианты — из block3_plan.variants ИЛИ из корня (старый формат)
   _variants = b3.variants || parsed.variants || [];
+  // Если AI вернул менее 3 вариантов — дополняем клонами с изменённой нагрузкой
   if (_variants.length < 3) {
-    console.warn("AI вернул менее 3 вариантов:", _variants.length);
+    console.warn("AI вернул менее 3 вариантов:", _variants.length, "— дополняем");
+    const base = _variants[0] || { label:"A", focus:"Базовый план", load:"средняя", tasks:[], rationale:"" };
+    const loads = ["лёгкая","средняя","высокая"];
+    const labels = ["A","B","C"];
+    while (_variants.length < 3) {
+      const idx = _variants.length;
+      // Берём базовый вариант и адаптируем нагрузку
+      const clone = JSON.parse(JSON.stringify(base));
+      clone.label = labels[idx];
+      clone.load  = loads[idx];
+      clone.focus = base.focus + (idx === 0 ? " (лёгкий)" : idx === 2 ? " (интенсивный)" : "");
+      clone.rationale = idx === 0
+        ? "Облегчённая версия — оставляем только самое важное."
+        : "Интенсивная версия — максимум задач при высокой энергии.";
+      // Для лёгкого — берём только 2 первые задачи, для тяжёлого — все
+      if (idx === 0 && clone.tasks?.length > 2) clone.tasks = clone.tasks.slice(0, 2);
+      _variants.push(clone);
+    }
   }
   _variants.forEach((v, i) => v.label = ["A","B","C"][i] || String(i+1));
 
