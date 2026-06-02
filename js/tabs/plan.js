@@ -282,13 +282,14 @@ function renderMainTaskCard(t, goals, targetStr) {
     </div>
     ${hasSubs ? `
     <div class="plan-tr-subs plan-mtc-subs" id="${subsId}" style="display:none">
-      ${subs.map(s => {
+      ${subs.map((s, si) => {
         const subTitle = typeof s === "object" ? (s.title || String(s)) : String(s);
         const subDone  = typeof s === "object" ? !!s.done : false;
         return `<div class="plan-tr-sub-row">
-          <span class="plan-tr-sub-dot ${subDone ? "done" : ""}">
-            ${subDone ? "✓" : "○"}
-          </span>
+          <input type="checkbox" class="plan-sub-check" ${subDone ? "checked" : ""}
+            data-taskid="${t.id}" data-subidx="${si}"
+            onclick="event.stopPropagation();window._toggleSubtask('${t.id}',${si},this.checked)"
+          />
           <span class="plan-tr-sub-title ${subDone ? "done" : ""}">${esc(subTitle)}</span>
         </div>`;
       }).join("")}
@@ -353,9 +354,10 @@ function renderTaskRow(t, isDoneToday, targetStr) {
         const subTitle = typeof s === "object" ? (s.title || s) : s;
         const subDone  = typeof s === "object" ? !!s.done : false;
         return `<div class="plan-tr-sub-row">
-          <span class="plan-tr-sub-dot ${subDone ? "done" : ""}">
-            ${subDone ? "✓" : "○"}
-          </span>
+          <input type="checkbox" class="plan-sub-check" ${subDone ? "checked" : ""}
+            data-taskid="${t.id}" data-subidx="${si}"
+            onclick="event.stopPropagation();window._toggleSubtask('${t.id}',${si},this.checked)"
+          />
           <span class="plan-tr-sub-title ${subDone ? "done" : ""}">${esc(String(subTitle))}</span>
         </div>`;
       }).join("")}
@@ -389,6 +391,36 @@ window._restoreFailedTask = async (id) => {
     await renderPlan();
   } catch(e) {
     console.error("restoreFailedTask:", e);
+  }
+};
+
+// ── Переключить состояние подзадачи ──
+window._toggleSubtask = async (taskId, subIdx, checked) => {
+  try {
+    const { getTasks, updateTask } = await import("../db.js");
+    const all = await getTasks();
+    const t = all.find(x => x.id === taskId);
+    if (!t) return;
+    const subs = Array.isArray(t.subtasks) ? [...t.subtasks] : [];
+    if (subIdx < 0 || subIdx >= subs.length) return;
+    // Обновляем состояние подзадачи
+    const sub = subs[subIdx];
+    subs[subIdx] = typeof sub === "object"
+      ? { ...sub, done: checked }
+      : { title: String(sub), done: checked };
+    await updateTask(taskId, { subtasks: subs });
+    // Обновляем отображение без полного рендера
+    const row = document.querySelector(
+      `[data-taskid="${taskId}"][data-subidx="${subIdx}"]`
+    )?.closest(".plan-tr-sub-row");
+    if (row) {
+      const lbl = row.querySelector(".plan-tr-sub-title");
+      if (lbl) lbl.classList.toggle("done", checked);
+    }
+    // Обновляем счётчик подзадач
+    await renderPlan();
+  } catch(e) {
+    console.error("_toggleSubtask:", e);
   }
 };
 
