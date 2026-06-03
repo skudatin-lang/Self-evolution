@@ -503,6 +503,7 @@ async function renderPlanMain(tasks, goals, projects) {
       return Array.isArray(t.failedDates) && t.failedDates.includes(targetStr)
         && !(t.done && t.completedDate === targetStr);
     }
+    // Обычная задача: явно помечена как failed в этот день
     return t.status === "failed" && t.failedDate === targetStr;
   };
 
@@ -512,7 +513,14 @@ async function renderPlanMain(tasks, goals, projects) {
   // Открытые — ТОЛЬКО для текущего дня
   // Для прошлых дней задача либо выполнена, либо провалена — третьего нет
   const openOnTarget = isToday
-    ? dayTasks.filter(t => !isDoneOnTarget(t) && !isFailedOnTarget(t))
+    ? dayTasks.filter(t => {
+        if (isDoneOnTarget(t)) return false;
+        if (isFailedOnTarget(t)) return false;
+        // Задача запланирована на прошлый день — не показываем как открытую сегодня
+        // (markFailedTasks должна была её пометить, но если не успела — скрываем)
+        if (t.date && t.date < targetStr) return false;
+        return true;
+      })
     : []; // прошлый день: открытых не показываем
 
   // Главные задачи — только из открытых
