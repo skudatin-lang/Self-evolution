@@ -362,26 +362,17 @@ export const markFailedTasks = async () => {
     // Пропускаем уже обработанные
     if (t.status === "failed" || t.displaced) continue;
     if (t.recurrence && t.recurrence.type !== "none") continue;
-
-    // Определяем дату задачи
-    // Для isMain/high priority задач без даты — используем дату создания если есть
-    let taskDate = t.date || null;
-    if (!taskDate && (t.isMain || t.priority === "high") && t.createdAt) {
-      try {
-        const created = t.createdAt.toDate ? t.createdAt.toDate() : new Date(t.createdAt);
-        taskDate = dstr(created);
-      } catch(_) {}
-    }
-    if (!taskDate) continue;
-    if (taskDate >= today2) continue; // только прошлые дни
+    if (!t.date) continue;
+    if (t.date >= today2) continue; // только прошлые дни
 
     // Задача выполнена если done=true ИЛИ completedDate совпадает с датой задачи
+    // Это защищает от гонки условий когда done был сброшен но completedDate остался
     const wasCompleted = t.done ||
-      (t.completedDate && t.completedDate >= taskDate) ||
-      (Array.isArray(t.completedDates) && t.completedDates.some(d => d >= taskDate));
+      (t.completedDate && t.completedDate >= t.date) ||
+      (Array.isArray(t.completedDates) && t.completedDates.some(d => d >= t.date));
     if (wasCompleted) continue;
 
-    updates.push({ id: t.id, failedDate: taskDate });
+    updates.push({ id: t.id, failedDate: t.date });
   }
 
   // ── Повторяющиеся задачи: для каждого прошлого дня (до 30 дней назад) ──
