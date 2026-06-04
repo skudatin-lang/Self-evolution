@@ -14,7 +14,7 @@ import { setUid, getTasks, getIdeas,
 import { initModal, toast, addSubRow,
          setPriority }                   from "./modal.js";
 import { switchTab, registerTab,
-         openSidebar, closeSidebar }     from "./router.js";
+         openSidebar, closeSidebar, markDirty } from "./router.js";
 import { openCal, closeCal,
          initCalendar }                  from "./calendar.js";
 import { openNewModal, editTaskModal,
@@ -122,15 +122,23 @@ window._refreshAll = refreshAll;
 //  REFRESH
 // ════════════════════════════════════════
 async function refreshAll() {
-  const tab = (await import("./router.js")).curTab;
-  if      (tab === "dashboard") { const { renderDashboard } = await import("./tabs/dashboard.js"); await renderDashboard?.(); }
-  else if (tab === "plan")      { await renderPlan(); renderGoals().catch(() => {}); }
-  else if (tab === "goals")     await renderGoals();
-  else if (tab === "ideas")     await renderIdeas();
-  else if (tab === "diary")     await renderDiary();
-  else if (tab === "profile")   await renderProfileTab();
-  else if (tab === "analytics") await renderAnalytics();
-  else if (tab === "ai-chat")   await renderAiChat();
+  const { curTab } = await import("./router.js");
+
+  // Всегда обновляем текущую вкладку
+  if      (curTab === "dashboard") { const { renderDashboard } = await import("./tabs/dashboard.js"); await renderDashboard?.(); }
+  else if (curTab === "plan")      await renderPlan();
+  else if (curTab === "goals")     await renderGoals();
+  else if (curTab === "ideas")     await renderIdeas();
+  else if (curTab === "diary")     await renderDiary();
+  else if (curTab === "profile")   await renderProfileTab();
+  else if (curTab === "analytics") await renderAnalytics();
+  else if (curTab === "ai-chat")   await renderAiChat();
+
+  // Помечаем связанные вкладки грязными — они перерисуются при переходе
+  // dashboard, plan, goals — взаимосвязаны (задачи, цели, проекты, прогресс)
+  const linked = { dashboard: ["plan","goals"], plan: ["dashboard","goals"], goals: ["dashboard","plan"] };
+  const toMark = linked[curTab] || [];
+  if (toMark.length) markDirty(...toMark);
 }
 
 // ════════════════════════════════════════

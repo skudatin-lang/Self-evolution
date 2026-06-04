@@ -28,6 +28,15 @@ export function registerTab(id, renderFn) {
   renderers[id] = renderFn;
 }
 
+// ── Dirty tabs — вкладки требующие перерисовки ──
+// При изменении данных помечаем связанные вкладки
+// При переходе на грязную вкладку — перерисовываем
+const dirtyTabs = new Set();
+
+export function markDirty(...tabs) {
+  tabs.forEach(t => { if (t !== curTab) dirtyTabs.add(t); });
+}
+
 // ── Switch tab ──
 export async function switchTab(id) {
   curTab  = id;
@@ -42,6 +51,10 @@ export async function switchTab(id) {
   $("tab-" + id)?.classList.add("on");
   $("tb-ttl").textContent = TAB_TITLES[id] || id;
   closeSidebar();
+  // Если вкладка помечена как грязная — всегда перерисовываем
+  if (dirtyTabs.has(id)) {
+    dirtyTabs.delete(id);
+  }
   if (renderers[id]) await renderers[id]();
 }
 
