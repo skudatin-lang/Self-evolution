@@ -10,8 +10,7 @@
 //   — Дневник: энергия+/-, теги, настроение
 // ════════════════════════════════════════
 
-import { openModal, closeModal, toast,
-         getSubtasks, getActivePriority, setPriority, addSubRow } from "./modal.js";
+import { openModal, closeModal, toast } from "./modal.js";
 import {
   addTask, updateTask, deleteTask,
   addGoal, updateGoal, deleteGoal,
