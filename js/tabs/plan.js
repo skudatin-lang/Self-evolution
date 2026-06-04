@@ -696,22 +696,7 @@ export async function renderPlan() {
 //  AI — для вкладки AI (стратегический анализ)
 //  Эти функции вызываются из ai-chat.js
 // ════════════════════════════════════════
-window._aiToggleCfg = () => {};
-window._aiSaveKey   = () => {
-  const val = document.getElementById("ai-key-inp")?.value.trim();
-  if (val) localStorage.setItem("lc-ai-key", val);
-};
-window._aiSaveProfile = () => {
-  const key = document.getElementById("ai-key-inp")?.value.trim();
-  if (key) localStorage.setItem("lc-ai-key", key);
-  const prof = {
-    chronotype:          document.getElementById("ai-chron")?.value || "lark",
-    best_hours:          document.getElementById("ai-best")?.value?.trim()  || "09:00-11:30",
-    worst_hours:         document.getElementById("ai-worst")?.value?.trim() || "15:00-17:00",
-    focus_limit_minutes: parseInt(document.getElementById("ai-focus")?.value) || 90,
-  };
-  localStorage.setItem("lc-ai-profile", JSON.stringify(prof));
-};
+
 
 // Стратегический анализ — полная версия
 async function askDeepSeek(systemPrompt, userMessage) {
