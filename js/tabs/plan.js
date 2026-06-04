@@ -15,6 +15,16 @@ let showAll  = false;
 
 export function initPlan() { registerTab("plan", renderPlan); }
 
+// Публичная функция — устанавливает дату и рендерит план
+// Вызывается из calendar.js при выборе даты в календаре
+window._setPlanDate = async (date) => {
+  planDate = new Date(date);
+  planDate.setHours(0, 0, 0, 0);
+  // Если сейчас не на вкладке ДЕНЬ — переключаемся
+  await window.switchTab?.("plan");
+  await renderPlan();
+};
+
 // ════════════════════════════════════════
 //  УТРЕННИЙ ПЛАН AI — надёжный запуск
 // ════════════════════════════════════════
@@ -503,16 +513,28 @@ async function renderPlanMain(tasks, goals, projects) {
       return Array.isArray(t.failedDates) && t.failedDates.includes(targetStr)
         && !(t.done && t.completedDate === targetStr);
     }
+    // Обычная задача: явно помечена как failed в этот день
     return t.status === "failed" && t.failedDate === targetStr;
   };
 
   const doneTasks   = dayTasks.filter(t => isDoneOnTarget(t));
   const failedTasks = dayTasks.filter(t => !isDoneOnTarget(t) && isFailedOnTarget(t));
 
-  // Открытые — ТОЛЬКО для текущего дня
-  // Для прошлых дней задача либо выполнена, либо провалена — третьего нет
-  const openOnTarget = isToday
-    ? dayTasks.filter(t => !isDoneOnTarget(t) && !isFailedOnTarget(t))
+  // isFuture — выбранный день в будущем
+  const isFuture = targetStr > td;
+
+  // Открытые задачи:
+  //  Сегодня и будущие дни → не выполненные и не провалено
+  //  Прошлые дни           → только выполненные и провалено (открытых нет)
+  const openOnTarget = (isToday || isFuture)
+    ? dayTasks.filter(t => {
+        if (isDoneOnTarget(t)) return false;
+        if (isFailedOnTarget(t)) return false;
+        // Только обычные (не повторяющиеся) задачи с датой прошлого дня скрываем
+        const isRecurring = t.recurrence && t.recurrence.type !== "none";
+        if (!isRecurring && t.date && t.date < targetStr) return false;
+        return true;
+      })
     : []; // прошлый день: открытых не показываем
 
   // Главные задачи — только из открытых
@@ -544,8 +566,8 @@ async function renderPlanMain(tasks, goals, projects) {
         </button>
       </div>` : ""}
 
-    <!-- Главные задачи — только для текущего дня -->
-    ${isToday ? `
+    <!-- Главные задачи — для сегодня и будущих дней -->
+    ${(isToday || isFuture) ? `
     <div class="plan-main-tasks">
       <div class="plan-main-tasks-header">
         <div class="plan-main-tasks-title">Главные задачи</div>
