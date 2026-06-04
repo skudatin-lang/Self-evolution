@@ -67,21 +67,24 @@ export async function renderCal() {
       // Picking mode
       if (selectCb) { selectCb(new Date(ds)); closeCal(); return; }
 
-      // Show detail
-      const dt = tasks.filter(t => t.date === ds);
-      const di = ideas.filter(x => x.date === ds);
-      const dd = diary.filter(x => x.date === ds);
-      let det  = `<div style="font-family:var(--fd);font-size:11px;font-weight:700;
-        color:var(--br);margin-bottom:8px;text-transform:uppercase;">${ds}</div>`;
-      if (dt.length) det += dt.map(t =>
-        `<div style="font-size:12px;padding:3px 0;color:var(--br-d)">📋 ${esc(t.title)}</div>`).join("");
-      if (di.length) det += di.map(x =>
-        `<div style="font-size:12px;padding:3px 0;color:var(--go-d)">💡 ${esc(x.title||x.text)}</div>`).join("");
-      if (dd.length) det += dd.map(x =>
-        `<div style="font-size:12px;padding:3px 0;color:var(--tx-m)">📖 ${esc(x.title||x.text)}</div>`).join("");
-      if (!dt.length && !di.length && !dd.length)
-        det += `<p style="font-size:12px;color:var(--tx-l)">Нет записей на этот день</p>`;
-      $("cal-det").innerHTML = det;
+      // Переходим на вкладку ДЕНЬ с выбранной датой
+      // Парсим дату в локальном времени
+      const [y2, m2, d2] = ds.split("-").map(Number);
+      const localDate = new Date(y2, m2 - 1, d2);
+      localDate.setHours(0, 0, 0, 0);
+
+      closeCal();
+
+      // Переключаем на вкладку ДЕНЬ и устанавливаем дату
+      if (window._setPlanDate) {
+        window._setPlanDate(localDate);
+      } else {
+        // Fallback: переключаем вкладку и ждём рендер
+        window.switchTab?.("plan").then?.(() => {
+          window._setPlanDate?.(localDate);
+        });
+        window.switchTab?.("plan");
+      }
     });
   });
 }
