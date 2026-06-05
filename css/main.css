@@ -1477,6 +1477,18 @@ body {
 .ep-sub { font-family:var(--fb); font-size:13px; color:var(--tx-l); display:block; }
 
 /* ═══════════════════════════════════════
+   SIDEBAR — десктоп
+   ═══════════════════════════════════════ */
+.sidebar {
+  width:var(--sb); min-width:var(--sb);
+  background:var(--bg-p);
+  border-right:1px solid var(--bd-s);
+  display:flex; flex-direction:column;
+  z-index:200; overflow:hidden; flex-shrink:0;
+  height:100vh; position:sticky; top:0;
+}
+
+/* ═══════════════════════════════════════
    RESPONSIVE — TABLET ≤900px
    ═══════════════════════════════════════ */
 @media(max-width:900px) {
