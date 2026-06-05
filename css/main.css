@@ -1507,8 +1507,8 @@ body {
   .sb-un, .sb-ue { display:inline; }
   .sb-new { margin:0; flex:1; min-width:120px; }
   .sb-btns { margin-top:0; }
-  .main-area { width:100%; flex:1; }
-  .mod-body { padding-bottom:80px; }
+  .main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .mod-body { flex:1; overflow-y:auto; padding:20px 24px; }
   .dash-grid { grid-template-columns:1fr 1fr; }
   .entry-picker-box { border-radius:var(--rxl) var(--rxl) 0 0; }
 }
@@ -1540,14 +1540,16 @@ body {
   /* Main layout — nav at bottom */
   .main-area { width:100%; display:flex; flex-direction:column-reverse; }
   .top-nav {
-    position:fixed; bottom:0; left:0; right:0; z-index:200;
-    border-top:1px solid var(--bd-s); border-bottom:none;
-    padding-bottom:env(safe-area-inset-bottom,0px);
-  }
+  display:flex; align-items:center;
+  background:var(--bg-p);
+  border-bottom:1px solid var(--bd-s);
+  padding:0 8px;
+  flex-shrink:0; overflow-x:auto; white-space:nowrap;
+}
   .nt { font-size:10px; padding:10px 2px; letter-spacing:.01em; }
   .nav-theme-btn { display:flex; }
   .mwrap { padding-bottom:60px; position:static; overflow:visible; height:auto; }
-  .mod { position:static; display:none; flex-direction:column; overflow:visible; }
+  .mod { position:absolute; inset:0; display:none; flex-direction:column; overflow:hidden; }
   .mod.on { display:flex; }
   .mod-hd { flex-shrink:0; }
   .mod-body { flex:none; overflow:visible; padding:12px 12px 80px; }
