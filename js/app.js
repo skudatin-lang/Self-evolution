@@ -420,7 +420,9 @@ const THEMES = {
 
 function initTheme() {
   const saved = localStorage.getItem("lc-palette") || "life-os";
-  applyPalette(saved);
+  // Применяем только если тема существует в THEMES — иначе дефолт
+  const palette = THEMES[saved] ? saved : "life-os";
+  applyPalette(palette);
   ["theme-toggle","nav-theme-btn"].forEach(id => {
     const btn = $(id);
     if (btn) btn.onclick = () => openPalettePicker();
