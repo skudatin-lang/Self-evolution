@@ -650,6 +650,16 @@ body {
    ITEM CARDS (Tasks, Ideas, Diary entries)
    ═══════════════════════════════════════ */
 .icard:hover {
+
+.ic-chk {
+  width:26px; height:26px; min-width:26px;
+  border:2px solid var(--bd-s); border-radius:6px;
+  background:var(--bg-w); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  margin-top:1px; transition:all var(--tt); flex-shrink:0;
+  font-size:14px; color:var(--go); font-weight:700;
+}
+.ic-chk.on { background:var(--go); border-color:var(--go); color:#050816; }
   border-color:var(--bd-s);
   box-shadow:0 4px 20px rgba(0,0,0,0.4);
   transform:translateY(-1px);
@@ -1487,6 +1497,18 @@ body {
   z-index:200; overflow:hidden; flex-shrink:0;
   height:100vh; position:sticky; top:0;
 }
+
+/* ── Task cards (icard) ── */
+.icard {
+  background:var(--cr); border:1px solid var(--bd); border-radius:var(--rl);
+  padding:12px 14px; margin-bottom:8px; display:flex; align-items:flex-start;
+  gap:10px; transition:all var(--tt); cursor:pointer;
+}
+.icard:hover { border-color:var(--bd-s); box-shadow:0 2px 8px var(--sh); }
+.icard.done  { opacity:.45; }
+.icard.done .ic-ttl { text-decoration:line-through; }
+.icard.displaced { opacity:.35; }
+.icard.displaced .ic-ttl { text-decoration:line-through; }
 
 /* ═══════════════════════════════════════
    RESPONSIVE — TABLET ≤900px
@@ -4412,15 +4434,7 @@ html, body {
   color: var(--tx) !important;
 }
 
-.sidebar    { background: var(--bg-p); }
-.main-area  { background: var(--bg); }
-.mod        { background: var(--bg); }
-.mod-body   { background: var(--bg); }
-.top-nav    { background: var(--bg-p); }
-.icard      { background: var(--bg-w); border-color: var(--bd); }
-.m-box      { background: var(--bg-p); }
-.m-ov       { background: rgba(0,0,0,0.7); }
-.bottom-nav { background: var(--bg-p); border-top-color: var(--bd); }
+/* theme backgrounds applied via CSS variables in full class definitions above */
 
 /* ═══════════════════════════════════════
    ПЛАН ДНЯ — AI strip (под чек-ин)
